@@ -32,8 +32,8 @@ impl BitReader {
 
 impl Read for BitReader {
     fn read(&mut self, buf: &mut [u8]) -> std::io::Result<usize> {
-        for i in 0..buf.len() {
-            buf[i] = self.read_bits(8) as u8;
+        for b in &mut *buf {
+            *b = self.read_bits(8) as u8;
         }
         Ok(buf.len())
     }

@@ -1,0 +1,8 @@
+[package]
+name = "powerjack-vpk"
+version = "0.0.0"
+edition = "2021"
+
+[dependencies]
+anyhow = "1"
+binrw.workspace = true

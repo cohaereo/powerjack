@@ -1,0 +1,9 @@
+[package]
+name = "powerjack-bsp"
+version = "0.0.0"
+edition = "2021"
+
+[dependencies]
+anyhow = "1"
+binrw.workspace = true
+lzma-rs = "0.3.0"

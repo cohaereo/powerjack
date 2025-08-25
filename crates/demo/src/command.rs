@@ -58,7 +58,7 @@ impl Command {
                 let data = r.read_bytes(len as usize)?;
                 Self::UserCmd(
                     outgoing_sequence,
-                    UserCmd::read(&mut BitReader::new(data), &usercmd)?,
+                    UserCmd::read(&mut BitReader::new(data), usercmd)?,
                 )
             }
             // Self::ID_DATATABLES => Ok((tick, Self::DataTables(read_bytes(r)?))),

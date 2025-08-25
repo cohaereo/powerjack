@@ -3,7 +3,14 @@ resolver = "3"
 members = [
     "crates/demo",
     "crates/bitbuf",
+    "crates/bsp",
+    "crates/viewer",
+    "crates/vpk",
 ]
 
 [workspace.dependencies]
+binrw = "0.15"
 glam = "0.30.5"
+
+[profile.dev.package.powerjack-bsp]
+opt-level = 3

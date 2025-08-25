@@ -1,0 +1,24 @@
+[package]
+name = "powerjack"
+version = "0.0.0"
+edition = "2021"
+
+[dependencies]
+powerjack-bsp = { path = "../bsp" }
+powerjack-demo = { path = "../demo" }
+
+anyhow = "1"
+bytemuck = { version = "1.23.2", features = ["derive"] }
+clap = { version = "4.5.45", features = ["derive"] }
+game-detector = { version = "0.1.5", features = ["steam"], default-features = false }
+glam = { workspace = true, features = ["bytemuck"] }
+image = { version = "0.25.6", default-features = false, features = ["png", "jpeg"] }
+pollster = "0.4.0"
+sdl3 = { git = "https://github.com/vhspace/sdl3-rs.git", features = [
+    "build-from-source",
+    "raw-window-handle",
+] }
+tracing = "0.1.41"
+tracing-subscriber = { version = "0.3.19", features = ["env-filter"] }
+wgpu = "26.0.1"
+bitflags = "2.9.3"
