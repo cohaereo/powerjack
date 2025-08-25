@@ -148,6 +148,13 @@ dependencies = [
 ]
 
 [[package]]
+name = "powerjack-bitbuf"
+version = "0.0.0"
+dependencies = [
+ "glam",
+]
+
+[[package]]
 name = "powerjack-demo"
 version = "0.0.0"
 dependencies = [
@@ -155,6 +162,7 @@ dependencies = [
  "bitflags",
  "chroma-dbg",
  "glam",
+ "powerjack-bitbuf",
 ]
 
 [[package]]

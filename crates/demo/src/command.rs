@@ -1,9 +1,7 @@
 use glam::Vec3;
 
-use crate::{
-    DemoHeader, bitreader::BitReader, reader::ReaderExt, stringtables::StringTable,
-    usercmd::UserCmd,
-};
+use crate::{DemoHeader, stringtables::StringTable, usercmd::UserCmd};
+use powerjack_bitbuf::{BitReader, ReaderExt};
 use std::{
     fmt::Debug,
     io::{Read, Seek},

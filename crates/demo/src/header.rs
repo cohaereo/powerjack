@@ -1,4 +1,4 @@
-use crate::reader::ReaderExt;
+use powerjack_bitbuf::ReaderExt;
 use std::io::Read;
 
 #[derive(Debug, Clone)]

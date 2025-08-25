@@ -6,6 +6,3 @@ pub use command::Command;
 
 pub mod stringtables;
 pub mod usercmd;
-
-mod bitreader;
-mod reader;

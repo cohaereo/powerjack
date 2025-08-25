@@ -2,4 +2,8 @@
 resolver = "3"
 members = [
     "crates/demo",
+    "crates/bitbuf",
 ]
+
+[workspace.dependencies]
+glam = "0.30.5"

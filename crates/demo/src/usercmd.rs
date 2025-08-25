@@ -1,7 +1,7 @@
 use bitflags::bitflags;
 use glam::{I16Vec2, Vec3};
 
-use crate::{bitreader::BitReader, reader::ReaderExt};
+use powerjack_bitbuf::{BitReader, ReaderExt};
 
 #[derive(Default, Debug, Clone)]
 pub struct UserCmd {

@@ -1,4 +1,4 @@
-use crate::{bitreader::BitReader, reader::ReaderExt};
+use powerjack_bitbuf::{BitReader, ReaderExt};
 
 pub struct StringTable {
     pub name: String,
