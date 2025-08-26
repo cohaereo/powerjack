@@ -55,6 +55,7 @@ impl Camera {
             Keycode::Right => self.buttons.set(Buttons::LOOK_RIGHT, state),
             Keycode::Up => self.buttons.set(Buttons::LOOK_UP, state),
             Keycode::Down => self.buttons.set(Buttons::LOOK_DOWN, state),
+            Keycode::LShift => self.buttons.set(Buttons::SPEED, state),
             _ => {}
         }
     }
@@ -70,7 +71,10 @@ impl Camera {
     }
 
     pub fn update(&mut self, dt: f32) {
-        let speed = 256.0 * dt;
+        let mut speed = 256.0 * dt;
+        if self.buttons.contains(Buttons::SPEED) {
+            speed *= 2.0;
+        }
 
         if self.buttons.contains(Buttons::FORWARD) {
             self.position += self.forward * speed;
@@ -85,7 +89,7 @@ impl Camera {
             self.position += self.right * speed;
         }
 
-        let look_speed = 70.0 * dt;
+        let look_speed = 85.0 * dt;
         if self.buttons.contains(Buttons::LOOK_LEFT) {
             self.yaw -= look_speed;
         }
@@ -129,5 +133,7 @@ bitflags! {
         const LOOK_RIGHT = (1 << 5);
         const LOOK_UP = (1 << 6);
         const LOOK_DOWN = (1 << 7);
+
+        const SPEED = (1 << 8);
     }
 }

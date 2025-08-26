@@ -32,7 +32,7 @@ fn vs_main(
 }
 
 struct MapFace {
-    lightmap_size: vec2<i32>,
+    lightmap_size: vec2<u32>,
     lightmap_offset: i32,
     padding: u32,
 }
@@ -51,37 +51,52 @@ var<storage, read> r_faces: array<MapFace>;
 // @binding(1)
 // var r_texture_sampler: sampler;
 
-fn sample_lightmap_texel(offset: u32) -> vec3<f32> {
+fn load_lightmap_texel(offset: u32) -> vec3<f32> {
     let v = r_lightmap[offset];
     let r = (v >> 24) & 0xFF;
     let g = (v >> 16) & 0xFF;
     let b = (v >> 8) & 0xFF;
     let exponent_packed: u32 = v & 0xFF;
-    let exponent = i32(exponent_packed << 24) >> 24;
+    let exponent = i32(exponent_packed) - 127;
     let color = vec3<f32>(f32(r), f32(g), f32(b)) / 255.0;
 
     return color * pow(2.0, f32(exponent));
-    // return color;
+}
+
+fn sample_lightmap(texcoord: vec2<f32>, face: MapFace) -> vec3<f32> {
+    let texcoord_scaled = vec2(
+        clamp(texcoord.x, 0.0, f32(face.lightmap_size.x)),
+        clamp(texcoord.y, 0.0, f32(face.lightmap_size.y))
+    );
+    let offset = u32(u32(face.lightmap_size.x) * u32(texcoord_scaled.y) + u32(texcoord_scaled.x));
+    return load_lightmap_texel(u32(face.lightmap_offset) + offset);
+}
+
+fn sample_lightmap_bilinear(texcoord: vec2<f32>, face: MapFace) -> vec3<f32> {
+    let tl = sample_lightmap(texcoord, face);
+    let tr = sample_lightmap(texcoord + vec2(1.0, 0.0), face);
+    let br = sample_lightmap(texcoord + vec2(1.0, 1.0), face);
+    let bl = sample_lightmap(texcoord + vec2(0.0, 1.0), face);
+
+    let lerp_x = texcoord.x - floor(texcoord.x);
+    let lerp_y = texcoord.y - floor(texcoord.y);
+
+    let top = mix(tl, tr, lerp_x);
+    let bottom = mix(bl, br, lerp_x);
+    return mix(top, bottom, lerp_y);
+}
+
+fn linear_to_srgb(linear: vec3<f32>) -> vec3<f32> {
+    return pow(linear, vec3<f32>(1.0 / 2.2));
 }
 
 @fragment
 fn fs_main(vertex: VertexOutput) -> @location(0) vec4<f32> {
     let face = r_faces[vertex.face_index];
-    var light = vec3<f32>(1.0, 1.0, 1.0);
+    var light = vec3<f32>(1.0, 0.0, 1.0);
     if (face.lightmap_offset >= 0) {
-        light = vec3<f32>(0.0, 0.0, 0.0);
-        for(var i: i32 = 0; i < face.lightmap_size.x; i++) {
-            for(var j: i32 = 0; j < face.lightmap_size.y; j++) {
-                let offset = face.lightmap_offset + i * face.lightmap_size.y + j;
-                light += sample_lightmap_texel(u32(offset));
-            }
-        }
-        light /= f32(face.lightmap_size.x * face.lightmap_size.y);
+        light = sample_lightmap_bilinear(vertex.lightmap_texcoord, face);
     }
 
-    // return vec4(vertex.lightmap_texcoord.xy, 0.0, 1.0);
-    var lightDir = normalize(vec3<f32>(0.5, 0.5, 0.0));
-    var diff = max(dot(vertex.normal, lightDir), 0.0);
-    return vec4(light * diff * vertex.color.xyz, 1.0);
-    // return vec4(diff, diff, diff, 1.0) * vertex.color;
+    return vec4(linear_to_srgb(light) * vertex.color.xyz, 1.0);
 }

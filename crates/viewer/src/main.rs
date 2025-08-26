@@ -42,7 +42,7 @@ fn main() -> anyhow::Result<()> {
         panic!("TF2 installation not found");
     };
 
-    let tf2_path = PathBuf::from(tf2_path);
+    let _tf2_path = PathBuf::from(tf2_path);
     let args = args::Args::parse();
 
     let sdl_context = Rc::new(sdl3::init().unwrap());
@@ -73,7 +73,7 @@ fn main() -> anyhow::Result<()> {
     video_subsystem.text_input().start(&window);
 
     let mut renderer = renderer::Renderer::new(&window)?;
-    let bsp = BspStaticRenderer::load(
+    let mut bsp = BspStaticRenderer::load(
         File::open(&args.bsp).context("Failed to open bsp file")?,
         &renderer.iad,
     )?;
@@ -103,7 +103,7 @@ fn main() -> anyhow::Result<()> {
         }
 
         renderer.camera.update(dt);
-        renderer.render(&bsp);
+        renderer.render(&mut bsp);
     }
 
     Ok(())

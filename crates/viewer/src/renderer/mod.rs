@@ -8,6 +8,7 @@ use crate::renderer::{bsp::BspStaticRenderer, iad::InstanceAdapterDevice};
 pub mod bsp;
 pub mod camera;
 pub mod iad;
+pub mod reloadable_pipeline;
 
 pub struct Renderer<'a> {
     pub iad: Arc<InstanceAdapterDevice>,
@@ -92,7 +93,7 @@ impl<'a> Renderer<'a> {
             .create_view(&wgpu::TextureViewDescriptor::default());
     }
 
-    pub fn render(&mut self, map: &BspStaticRenderer) {
+    pub fn render(&mut self, map: &mut BspStaticRenderer) {
         let Ok(frame) = self.surface.get_current_texture() else {
             return;
         };
@@ -131,6 +132,7 @@ impl<'a> Renderer<'a> {
 
             let size = frame.texture.size();
             map.render(
+                &self.iad,
                 &mut rpass,
                 self.camera
                     .world_to_projective(size.width as f32 / size.height as f32),

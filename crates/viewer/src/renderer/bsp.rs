@@ -1,16 +1,19 @@
 use std::{
-    borrow::Cow,
     fs::File,
     io::{Read, Seek, Write},
     ops::Range,
 };
 
+use anyhow::Context;
 use bytemuck::{Pod, Zeroable};
-use glam::{IVec2, Mat4, UVec2, Vec2, Vec3, Vec4};
+use glam::{IVec2, Mat4, Vec2, Vec3, Vec4};
 use powerjack_bsp::{lumps::BspFace, Bsp, BspFile};
 use wgpu::util::DeviceExt;
 
-use crate::renderer::iad::InstanceAdapterDevice;
+use crate::renderer::{
+    iad::InstanceAdapterDevice,
+    reloadable_pipeline::{ReloadablePipeline, ShaderSource},
+};
 
 pub struct BspStaticRenderer {
     data: Bsp,
@@ -22,7 +25,7 @@ pub struct BspStaticRenderer {
     lightmap_bindgroup: wgpu::BindGroup,
 
     faces: Vec<(Range<u32>, BspFace)>,
-    pipeline: wgpu::RenderPipeline,
+    pipeline: ReloadablePipeline,
 }
 
 impl BspStaticRenderer {
@@ -42,14 +45,14 @@ impl BspStaticRenderer {
             .enumerate()
         {
             gpu_faces.push(GpuMapFace {
-                lightmap_face_size: f.lightmap_size.into(),
+                lightmap_face_size: IVec2::from(f.lightmap_size) + IVec2::ONE,
                 lightmap_offset: f.lightmap_data_offset / 4,
                 padding: 0xFEEDBEEF,
             });
 
-            // if f.disp_info != -1 {
-            //     continue;
-            // }
+            if f.disp_info != -1 {
+                continue;
+            }
 
             let normal = Vec3::from(bsp.planes[f.plane_num as usize].normal);
             let mut face_indices = vec![];
@@ -61,22 +64,15 @@ impl BspStaticRenderer {
                     bsp.edges[edge.unsigned_abs() as usize][1] as u32
                 };
                 face_indices.push(e);
-                // normals[e as usize] = bsp.planes[f.plane_num as usize].normal;
             }
 
             let ti = &bsp.tex_info[f.tex_info as usize];
             let td = &bsp.tex_data[ti.tex_data as usize];
-            // let filename = &bsp.texdata_string_table[td.name_index as usize];
-            // println!("{filename}");
             let color = Vec3::from([td.reflectivity[0], td.reflectivity[1], td.reflectivity[2]]);
 
             // First vertex for this face
             let face_data_start = face_data.len();
             for ii in 2..face_indices.len() {
-                // indices.push(face[i]);
-                // indices.push(face[i - 1]);
-                // indices.push(face[0]);
-
                 face_data.push(StaticMapVertex::new(
                     bsp.vertices[face_indices[ii] as usize].into(),
                     normal,
@@ -125,24 +121,8 @@ impl BspStaticRenderer {
                 if f.lightmap_data_offset >= 0 {
                     let lu = Vec4::from(ti.lightmap_vecs[0]);
                     let lv = Vec4::from(ti.lightmap_vecs[1]);
-                    v.lightmap_uv.x =
-                        lu.x * v.position.x + lu.y * v.position.y + lu.z * v.position.z + lu.w;
-                    v.lightmap_uv.y =
-                        lv.x * v.position.x + lv.y * v.position.y + lv.z * v.position.z + lv.w;
-
-                    // let luv_rect = &packed_lightmap_rects[fi];
-                    // let lrect_offset =
-                    //     IVec2::new(luv_rect.packed_top_left_x, luv_rect.packed_top_left_y)
-                    //         .as_vec2()
-                    //         / Vec2::splat(lightmap.size() as f32);
-
-                    // let lrect_scale = IVec2::new(luv_rect.width, luv_rect.height).as_vec2()
-                    //     / Vec2::splat(lightmap.size() as f32);
-
-                    // let luv_mins = IVec2::from(f.lightmap_mins).as_vec2();
-                    // let luv_size = IVec2::from(f.lightmap_size).as_vec2() + Vec2::ONE;
-                    // v.lightmap_uv =
-                    //     ((v.lightmap_uv - luv_mins) / luv_size) * lrect_scale + lrect_offset;
+                    v.lightmap_uv.x = lu.dot(v.position.extend(1.0)) - f.lightmap_mins[0] as f32;
+                    v.lightmap_uv.y = lv.dot(v.position.extend(1.0)) - f.lightmap_mins[1] as f32;
                 } else {
                     v.lightmap_uv = Vec2::ZERO;
                 }
@@ -175,14 +155,13 @@ impl BspStaticRenderer {
             .lightmap_data
             .iter()
             .map(|t| {
-                (t.r as u32) << 24 | (t.g as u32) << 16 | (t.b as u32) << 8 | t.exponent as u32
+                let exponent_quantized = (t.exponent as i32 + 127) as u8;
+                (t.r as u32) << 24
+                    | (t.g as u32) << 16
+                    | (t.b as u32) << 8
+                    | exponent_quantized as u32
             })
             .collect::<Vec<_>>();
-
-        let mut llf = File::create("lightmap.bin")?;
-        for l in &lightmap_data {
-            llf.write_all(&l.to_be_bytes())?;
-        }
 
         let lightmap_buffer = iad.create_buffer_init(&wgpu::util::BufferInitDescriptor {
             label: Some("Static Map Lightmap Data"),
@@ -194,13 +173,6 @@ impl BspStaticRenderer {
             label: Some("Static Map Face Info"),
             usage: wgpu::BufferUsages::STORAGE,
             contents: bytemuck::cast_slice(&gpu_faces),
-        });
-
-        let shader = iad.create_shader_module(wgpu::ShaderModuleDescriptor {
-            label: None,
-            source: wgpu::ShaderSource::Wgsl(Cow::Borrowed(include_str!(
-                "../../shaders/world.wgsl"
-            ))),
         });
 
         let lightmap_bindgroup_layout =
@@ -262,45 +234,51 @@ impl BspStaticRenderer {
             }],
         });
 
-        let pipeline = iad.create_render_pipeline(&wgpu::RenderPipelineDescriptor {
-            label: None,
-            layout: Some(&pipeline_layout),
-            vertex: wgpu::VertexState {
-                module: &shader,
-                entry_point: Some("vs_main"),
-                compilation_options: Default::default(),
-                buffers: std::slice::from_ref(&StaticMapVertex::LAYOUT),
-            },
-            primitive: wgpu::PrimitiveState {
-                topology: wgpu::PrimitiveTopology::TriangleList,
-                strip_index_format: None,
-                front_face: wgpu::FrontFace::Ccw,
-                cull_mode: Some(wgpu::Face::Back),
-                unclipped_depth: false,
-                polygon_mode: wgpu::PolygonMode::Fill,
-                conservative: false,
-            },
-            depth_stencil: Some(wgpu::DepthStencilState {
-                format: wgpu::TextureFormat::Depth32Float,
-                depth_write_enabled: true,
-                depth_compare: wgpu::CompareFunction::Less,
-                stencil: Default::default(),
-                bias: Default::default(),
+        let pipeline = ReloadablePipeline::new(
+            pipeline_layout,
+            ShaderSource::new_file("shaders/world.wgsl").context("Failed to load world shader")?,
+            Box::new(|device: &wgpu::Device, layout, shader| {
+                device.create_render_pipeline(&wgpu::RenderPipelineDescriptor {
+                    label: None,
+                    layout: Some(&layout),
+                    vertex: wgpu::VertexState {
+                        module: &shader,
+                        entry_point: Some("vs_main"),
+                        compilation_options: Default::default(),
+                        buffers: std::slice::from_ref(&StaticMapVertex::LAYOUT),
+                    },
+                    primitive: wgpu::PrimitiveState {
+                        topology: wgpu::PrimitiveTopology::TriangleList,
+                        strip_index_format: None,
+                        front_face: wgpu::FrontFace::Ccw,
+                        cull_mode: Some(wgpu::Face::Back),
+                        unclipped_depth: false,
+                        polygon_mode: wgpu::PolygonMode::Fill,
+                        conservative: false,
+                    },
+                    depth_stencil: Some(wgpu::DepthStencilState {
+                        format: wgpu::TextureFormat::Depth32Float,
+                        depth_write_enabled: true,
+                        depth_compare: wgpu::CompareFunction::Less,
+                        stencil: Default::default(),
+                        bias: Default::default(),
+                    }),
+                    multisample: Default::default(),
+                    fragment: Some(wgpu::FragmentState {
+                        module: &shader,
+                        entry_point: Some("fs_main"),
+                        compilation_options: Default::default(),
+                        targets: &[Some(wgpu::ColorTargetState {
+                            format: wgpu::TextureFormat::Bgra8UnormSrgb,
+                            blend: None,
+                            write_mask: wgpu::ColorWrites::ALL,
+                        })],
+                    }),
+                    multiview: None,
+                    cache: None,
+                })
             }),
-            multisample: Default::default(),
-            fragment: Some(wgpu::FragmentState {
-                module: &shader,
-                entry_point: Some("fs_main"),
-                compilation_options: Default::default(),
-                targets: &[Some(wgpu::ColorTargetState {
-                    format: wgpu::TextureFormat::Bgra8UnormSrgb,
-                    blend: None,
-                    write_mask: wgpu::ColorWrites::ALL,
-                })],
-            }),
-            multiview: None,
-            cache: None,
-        });
+        );
 
         Ok(Self {
             data: bsp,
@@ -313,8 +291,13 @@ impl BspStaticRenderer {
         })
     }
 
-    pub fn render(&self, pass: &mut wgpu::RenderPass, camera: Mat4) {
-        pass.set_pipeline(&self.pipeline);
+    pub fn render(
+        &mut self,
+        iad: &InstanceAdapterDevice,
+        pass: &mut wgpu::RenderPass,
+        camera: Mat4,
+    ) {
+        pass.set_pipeline(&self.pipeline.compiled_pipeline(iad));
         pass.set_bind_group(0, &self.lightmap_bindgroup, &[]);
         pass.set_push_constants(
             wgpu::ShaderStages::VERTEX,
@@ -324,10 +307,10 @@ impl BspStaticRenderer {
         pass.set_vertex_buffer(0, self.vertex_buffer.slice(..));
         pass.set_index_buffer(self.index_buffer.slice(..), wgpu::IndexFormat::Uint32);
 
-        pass.draw_indexed(0..self.index_count, 0, 0..1);
-        // for (draw_range, face) in &self.faces {
-        //     pass.draw_indexed(draw_range.clone(), 0, 0..1);
-        // }
+        // pass.draw_indexed(0..self.index_count, 0, 0..1);
+        for (draw_range, face) in &self.faces {
+            pass.draw_indexed(draw_range.clone(), 0, 0..1);
+        }
     }
 }
 

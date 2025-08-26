@@ -1072,6 +1072,7 @@ dependencies = [
  "game-detector",
  "glam",
  "image",
+ "lazy_static",
  "pollster",
  "powerjack-bsp",
  "powerjack-demo",
