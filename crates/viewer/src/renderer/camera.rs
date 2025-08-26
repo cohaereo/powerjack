@@ -111,9 +111,8 @@ impl Camera {
 
     pub fn view_to_projective(&self, aspect_ratio: f32) -> Mat4 {
         let near = 0.1;
-        let far = 5000.0;
 
-        Mat4::perspective_rh(self.fov.to_radians(), aspect_ratio, near, far)
+        Mat4::perspective_infinite_reverse_rh(self.fov.to_radians(), aspect_ratio, near)
     }
 
     pub fn world_to_projective(&self, aspect_ratio: f32) -> Mat4 {
