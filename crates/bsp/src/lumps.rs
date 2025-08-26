@@ -1,7 +1,7 @@
 use binrw::BinRead;
 
 #[derive(BinRead, Debug, Clone)]
-#[repr(C, packed)]
+// #[repr(C, packed)]
 pub struct BspFace {
     pub plane_num: u16,
     pub side: u8,

@@ -35,21 +35,30 @@ impl InstanceAdapterDevice {
             })
             .await?;
 
+        let required_limits = wgpu::Limits {
+            max_texture_dimension_1d: 8192,
+            max_texture_dimension_2d: 8192,
+            max_push_constant_size: 256,
+            ..wgpu::Limits::defaults()
+        };
         let (device, queue) = adapter
             .request_device(&wgpu::DeviceDescriptor {
                 required_features: wgpu::Features::PUSH_CONSTANTS
                     | wgpu::Features::TEXTURE_COMPRESSION_BC,
-                required_limits: wgpu::Limits {
-                    max_texture_dimension_1d: 8192,
-                    max_texture_dimension_2d: 8192,
-                    max_push_constant_size: 256,
-                    ..wgpu::Limits::defaults()
-                },
+                required_limits,
                 label: None,
                 memory_hints: wgpu::MemoryHints::Performance,
                 trace: wgpu::Trace::Off,
             })
             .await?;
+
+        device.on_uncaptured_error(Box::new(|error| {
+            let error_str = error.to_string();
+            if error_str.contains("set_pipeline") {
+                return;
+            }
+            error!("wgpu error: {error}");
+        }));
 
         Ok(Arc::new(Self {
             instance,
