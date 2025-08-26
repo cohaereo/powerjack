@@ -3,6 +3,8 @@ use binrw::{BinRead, BinReaderExt, BinWriterExt};
 use lumps::{BspColorRgbExp, BspFace, BspModel, BspPlane, BspTexData, BspTexInfo};
 use std::io::{Cursor, Read, Seek, SeekFrom, Write};
 
+use crate::lumps::{BspDispInfo, BspDispTri, BspDispVert};
+
 pub const BSP_LUMP_COUNT: usize = 64;
 
 pub mod lumps;
@@ -107,6 +109,10 @@ pub struct Bsp {
     pub tex_data: Vec<BspTexData>,
     pub lightmap_data: Vec<BspColorRgbExp>,
 
+    pub disp_info: Vec<BspDispInfo>,
+    pub disp_verts: Vec<BspDispVert>,
+    pub disp_tris: Vec<BspDispTri>,
+
     pub texdata_string_table: Vec<String>,
 }
 
@@ -137,6 +143,9 @@ impl Bsp {
             tex_info: file.read_lump(6)?,
             tex_data: file.read_lump(2)?,
             lightmap_data: file.read_lump(8)?,
+            disp_info: file.read_lump(26)?,
+            disp_verts: file.read_lump(33)?,
+            disp_tris: file.read_lump(48)?,
             texdata_string_table,
         })
     }

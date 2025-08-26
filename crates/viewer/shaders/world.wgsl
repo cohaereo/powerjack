@@ -86,10 +86,6 @@ fn sample_lightmap_bilinear(texcoord: vec2<f32>, face: MapFace) -> vec3<f32> {
     return mix(top, bottom, lerp_y);
 }
 
-fn linear_to_srgb(linear: vec3<f32>) -> vec3<f32> {
-    return pow(linear, vec3<f32>(1.0 / 2.2));
-}
-
 @fragment
 fn fs_main(vertex: VertexOutput) -> @location(0) vec4<f32> {
     let face = r_faces[vertex.face_index];
@@ -98,5 +94,5 @@ fn fs_main(vertex: VertexOutput) -> @location(0) vec4<f32> {
         light = sample_lightmap_bilinear(vertex.lightmap_texcoord, face);
     }
 
-    return vec4(linear_to_srgb(light) * vertex.color.xyz, 1.0);
+    return vec4(light * vertex.color.xyz, 1.0);
 }

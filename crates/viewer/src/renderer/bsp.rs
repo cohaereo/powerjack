@@ -1,4 +1,5 @@
 use std::{
+    f32,
     fs::File,
     io::{Read, Seek, Write},
     ops::Range,
@@ -34,7 +35,7 @@ impl BspStaticRenderer {
         let bsp = Bsp::parse(&mut file)?;
 
         let mut gpu_faces = Vec::with_capacity(bsp.faces.len());
-        let mut face_data: Vec<StaticMapVertex> = vec![];
+        let mut face_vertices: Vec<StaticMapVertex> = vec![];
         let mut faces = Vec::with_capacity(bsp.faces.len());
         let mut indices: Vec<u32> = vec![];
         let mut i = 0;
@@ -50,62 +51,157 @@ impl BspStaticRenderer {
                 padding: 0xFEEDBEEF,
             });
 
-            if f.disp_info != -1 {
-                continue;
-            }
-
-            let normal = Vec3::from(bsp.planes[f.plane_num as usize].normal);
-            let mut face_indices = vec![];
-            for i in 0..f.num_edges as usize {
-                let edge = bsp.surfedges[f.first_edge as usize + i];
-                let e = if edge < 0 {
-                    bsp.edges[edge.unsigned_abs() as usize][0] as u32
-                } else {
-                    bsp.edges[edge.unsigned_abs() as usize][1] as u32
-                };
-                face_indices.push(e);
-            }
-
             let ti = &bsp.tex_info[f.tex_info as usize];
             let td = &bsp.tex_data[ti.tex_data as usize];
-            let color = Vec3::from([td.reflectivity[0], td.reflectivity[1], td.reflectivity[2]]);
+            let color = Vec3::from([
+                td.reflectivity[0].sqrt(),
+                td.reflectivity[1].sqrt(),
+                td.reflectivity[2].sqrt(),
+            ]);
+            let normal = Vec3::from(bsp.planes[f.plane_num as usize].normal);
 
             // First vertex for this face
-            let face_data_start = face_data.len();
-            for ii in 2..face_indices.len() {
-                face_data.push(StaticMapVertex::new(
-                    bsp.vertices[face_indices[ii] as usize].into(),
-                    normal,
-                    Vec2::ZERO,
-                    Vec2::ZERO,
-                    color,
-                    fi as u32,
-                ));
-                face_data.push(StaticMapVertex::new(
-                    bsp.vertices[face_indices[ii - 1] as usize].into(),
-                    normal,
-                    Vec2::ZERO,
-                    Vec2::ZERO,
-                    color,
-                    fi as u32,
-                ));
-                face_data.push(StaticMapVertex::new(
-                    bsp.vertices[face_indices[0] as usize].into(),
-                    normal,
-                    Vec2::ZERO,
-                    Vec2::ZERO,
-                    color,
-                    fi as u32,
-                ));
+            let face_data_start = face_vertices.len();
+            // let mut add_vert = |v: Vec3, n: Vec3| {
+            //     face_vertices.push(StaticMapVertex::new(
+            //         v,
+            //         n,
+            //         Vec2::ZERO,
+            //         Vec2::ZERO,
+            //         color,
+            //         fi as u32,
+            //     ));
+            // };
 
-                indices.push(i);
-                indices.push(i + 1);
-                indices.push(i + 2);
-
-                i += 3;
+            macro_rules! add_vert {
+                ($v:expr, $n:expr) => {
+                    face_vertices.push(StaticMapVertex::new(
+                        $v,
+                        $n,
+                        Vec2::ZERO,
+                        Vec2::ZERO,
+                        color,
+                        fi as u32,
+                    ));
+                };
             }
 
-            for v in &mut face_data[face_data_start..] {
+            if f.disp_info != -1 {
+                let dispinfo = &bsp.disp_info[f.disp_info as usize];
+                let low_base = Vec3::from(dispinfo.start_position);
+                if f.num_edges != 4 {
+                    error!("Bad displacement (face {fi})");
+                    continue;
+                }
+
+                let mut corner_verts = [Vec3::ZERO; 4];
+                let mut base_i = 0;
+                let mut base_dist = f32::INFINITY;
+                for (k, vert) in corner_verts.iter_mut().enumerate() {
+                    let edge = bsp.surfedges[f.first_edge as usize + k];
+                    let e = if edge < 0 {
+                        bsp.edges[edge.unsigned_abs() as usize][0] as u32
+                    } else {
+                        bsp.edges[edge.unsigned_abs() as usize][1] as u32
+                    };
+
+                    *vert = bsp.vertices[e as usize].into();
+                    let this_dist = (vert.x - low_base.x).abs()
+                        + (vert.y - low_base.y).abs()
+                        + (vert.z - low_base.z).abs();
+                    if this_dist < base_dist {
+                        base_dist = this_dist;
+                        base_i = k;
+                    }
+                }
+
+                let high_base = corner_verts[(base_i + 3) % 4];
+                let high_ray = corner_verts[(base_i + 2) % 4] - high_base;
+                let low_ray = corner_verts[(base_i + 1) % 4] - low_base;
+                let verts_wide = ((2 << (dispinfo.power - 1)) + 1) as usize;
+                let mut base_verts = vec![Vec3::ZERO; verts_wide * verts_wide];
+                let mut base_alphas = vec![0.0; verts_wide * verts_wide];
+                let base_dispvert = dispinfo.disp_vert_start.unsigned_abs() as usize;
+
+                for y in 0..verts_wide {
+                    let fy = y as f32 / (verts_wide as f32 - 1.0);
+
+                    let mid_base = low_base + low_ray * fy;
+                    let mid_ray = high_base + high_ray * fy - mid_base;
+
+                    for x in 0..verts_wide {
+                        let fx = x as f32 / (verts_wide as f32 - 1.0);
+                        let ii = y * verts_wide + x;
+
+                        let vert = &bsp.disp_verts[base_dispvert + ii];
+                        let offset = Vec3::from(vert.vec);
+                        let scale = vert.dist;
+                        let alpha = vert.alpha / 255.0;
+
+                        base_verts[ii] = mid_base + mid_ray * fx + offset * scale;
+                        base_alphas[ii] = alpha;
+                    }
+                }
+
+                for y in 0..(verts_wide - 1) {
+                    for x in 0..(verts_wide - 1) {
+                        let ii = y * verts_wide + x;
+
+                        let v1 = base_verts[ii];
+                        let v2 = base_verts[ii + 1];
+                        let v3 = base_verts[ii + verts_wide];
+                        let v4 = base_verts[ii + verts_wide + 1];
+
+                        if ii.is_multiple_of(2) {
+                            add_vert!(v1, normal);
+                            add_vert!(v2, normal);
+                            add_vert!(v3, normal);
+                            add_vert!(v2, normal);
+                            add_vert!(v4, normal);
+                            add_vert!(v3, normal);
+                        } else {
+                            add_vert!(v1, normal);
+                            add_vert!(v4, normal);
+                            add_vert!(v3, normal);
+                            add_vert!(v2, normal);
+                            add_vert!(v4, normal);
+                            add_vert!(v1, normal);
+                        }
+
+                        indices.extend_from_slice(&[i, i + 1, i + 2, i + 3, i + 4, i + 5]);
+
+                        i += 6;
+                    }
+                }
+            } else {
+                let mut face_indices = vec![];
+                for i in 0..f.num_edges as usize {
+                    let edge = bsp.surfedges[f.first_edge as usize + i];
+                    let e = if edge < 0 {
+                        bsp.edges[edge.unsigned_abs() as usize][0] as u32
+                    } else {
+                        bsp.edges[edge.unsigned_abs() as usize][1] as u32
+                    };
+                    face_indices.push(e);
+                }
+
+                for ii in 2..face_indices.len() {
+                    add_vert!(bsp.vertices[face_indices[ii] as usize].into(), normal);
+                    add_vert!(bsp.vertices[face_indices[ii - 1] as usize].into(), normal);
+                    add_vert!(bsp.vertices[face_indices[0] as usize].into(), normal);
+
+                    indices.extend_from_slice(&[i, i + 1, i + 2]);
+
+                    i += 3;
+                }
+                // warn!(
+                //     "Can't handle a face with more/less than 4 vertices (has {})",
+                //     face.len()
+                // );
+                // }
+            }
+
+            for v in &mut face_vertices[face_data_start..] {
                 // Texture UV
                 {
                     let tu = Vec4::from(ti.texture_vecs[0]);
@@ -127,13 +223,8 @@ impl BspStaticRenderer {
                     v.lightmap_uv = Vec2::ZERO;
                 }
             }
-            // warn!(
-            //     "Can't handle a face with more/less than 4 vertices (has {})",
-            //     face.len()
-            // );
-            // }
 
-            let face_data_end = face_data.len();
+            let face_data_end = face_vertices.len();
             let draw_range = (face_data_start as u32)..(face_data_end as u32);
 
             faces.push((draw_range, f.clone()));
@@ -142,7 +233,7 @@ impl BspStaticRenderer {
         let vertex_buffer = iad.create_buffer_init(&wgpu::util::BufferInitDescriptor {
             label: Some("Static Map Geometry Vertex Buffer"),
             usage: wgpu::BufferUsages::VERTEX,
-            contents: bytemuck::cast_slice(&face_data),
+            contents: bytemuck::cast_slice(&face_vertices),
         });
 
         let index_buffer = iad.create_buffer_init(&wgpu::util::BufferInitDescriptor {
