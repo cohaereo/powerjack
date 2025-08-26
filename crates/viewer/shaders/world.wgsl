@@ -34,7 +34,7 @@ fn vs_main(
 struct MapFace {
     lightmap_size: vec2<u32>,
     lightmap_offset: i32,
-    padding: u32,
+    flags: u32,
 }
 
 @group(0)
@@ -89,8 +89,8 @@ fn sample_lightmap_bilinear(texcoord: vec2<f32>, face: MapFace) -> vec3<f32> {
 @fragment
 fn fs_main(vertex: VertexOutput) -> @location(0) vec4<f32> {
     let face = r_faces[vertex.face_index];
-    var light = vec3<f32>(1.0, 0.0, 1.0);
-    if (face.lightmap_offset >= 0) {
+    var light = vec3<f32>(1.0, 1.0, 1.0);
+    if (face.lightmap_offset >= 0 && (face.flags & 1) == 0) {
         light = sample_lightmap_bilinear(vertex.lightmap_texcoord, face);
     }
 

@@ -1,11 +1,11 @@
 use std::{
     f32,
-    fs::File,
-    io::{Read, Seek, Write},
+    io::{Read, Seek},
     ops::Range,
 };
 
 use anyhow::Context;
+use bitflags::bitflags;
 use bytemuck::{Pod, Zeroable};
 use glam::{IVec2, Mat4, Vec2, Vec3, Vec4};
 use powerjack_bsp::{lumps::BspFace, Bsp, BspFile};
@@ -45,10 +45,12 @@ impl BspStaticRenderer {
             .iter()
             .enumerate()
         {
+            let mut flags = FaceFlags::empty();
+            flags.set(FaceFlags::DISPLACEMENT, f.disp_info >= 0);
             gpu_faces.push(GpuMapFace {
                 lightmap_face_size: IVec2::from(f.lightmap_size) + IVec2::ONE,
                 lightmap_offset: f.lightmap_data_offset / 4,
-                padding: 0xFEEDBEEF,
+                flags,
             });
 
             let ti = &bsp.tex_info[f.tex_info as usize];
@@ -456,5 +458,16 @@ impl StaticMapVertex {
 pub struct GpuMapFace {
     pub lightmap_face_size: IVec2,
     pub lightmap_offset: i32,
-    pub padding: u32,
+    pub flags: FaceFlags,
 }
+
+bitflags! {
+    #[derive(Default, Copy, Clone, Debug)]
+    #[repr(C)]
+    struct FaceFlags: u32 {
+        const DISPLACEMENT = (1 << 0);
+    }
+}
+
+unsafe impl bytemuck::Zeroable for FaceFlags {}
+unsafe impl bytemuck::Pod for FaceFlags {}
