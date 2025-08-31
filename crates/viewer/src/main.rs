@@ -53,8 +53,8 @@ fn main() -> anyhow::Result<()> {
     let args = args::Args::parse();
 
     let mut fs = Filesystem::default();
-    fs.mount_vpk(hl2_dir.join("hl2_textures_dir.vpk"))?;
     fs.mount_vpk(tf_dir.join("tf2_textures_dir.vpk"))?;
+    fs.mount_vpk(hl2_dir.join("hl2_textures_dir.vpk"))?;
     // fs.mount_vpk(tf_dir.join("tf2_misc_dir.vpk"))?;
     // fs.mount_vpk(tf_dir.join("tf2_sound_misc_dir.vpk"))?;
     // if let Err(e) = fs.mount_vpk(tf_dir.join("tf2_sound_vo_english_dir.vpk")) {
