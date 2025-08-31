@@ -1,5 +1,11 @@
-use std::{fs::File, io::BufReader, path::Path, sync::Arc};
+use std::{
+    fs::File,
+    io::{BufReader, Cursor},
+    path::Path,
+    sync::Arc,
+};
 
+use ::zip::ZipArchive;
 use parking_lot::Mutex;
 use powerjack_vpk::VpkFile;
 
@@ -29,11 +35,16 @@ impl Filesystem {
 
     pub fn mount_vpk(&mut self, path: impl AsRef<Path>) -> anyhow::Result<()> {
         info!("Mounting VPK '{}'", path.as_ref().display());
-        let f = BufReader::new(File::open(&path)?);
+        let f = BufReader::with_capacity(1024 * 1024, File::open(&path)?);
         self.add_mount(Box::new(VpkFile::new(
             f,
             Some(path.as_ref().to_string_lossy().to_string()),
         )?));
+        Ok(())
+    }
+
+    pub fn mount_zip(&mut self, zip: Vec<u8>) -> anyhow::Result<()> {
+        self.add_mount(Box::new(ZipArchive::new(Cursor::new(zip))?));
         Ok(())
     }
 

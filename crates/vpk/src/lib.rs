@@ -48,7 +48,7 @@ impl<R: Read + Seek> VpkFile<R> {
                 break;
             }
 
-            let mut paths = CaseInsensitiveHashMap::new();
+            let mut paths = CaseInsensitiveHashMap::with_capacity(4096);
             loop {
                 let path = r
                     .read_le::<NullString>()
@@ -58,7 +58,7 @@ impl<R: Read + Seek> VpkFile<R> {
                     break;
                 }
 
-                let mut path_files = CaseInsensitiveHashMap::new();
+                let mut path_files = CaseInsensitiveHashMap::with_capacity(4096);
 
                 loop {
                     let filename = r
@@ -107,7 +107,6 @@ impl<R: Read + Seek> VpkFile<R> {
         let filename = path.file_stem().context("Path does not have a filename")?;
 
         let Some(extension) = self.directory.get(extension) else {
-            println!("Extension not found: {}", extension);
             return Ok(None);
         };
         let Some(path) = extension.get(

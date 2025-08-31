@@ -39,10 +39,18 @@ impl BspStaticRenderer {
 
         let mut file = BspFile::new(reader)?;
         let bsp = Bsp::parse(&mut file)?;
+        let pakfile = file.read_lump_raw(40)?;
+        renderer.fs.lock().mount_zip(pakfile)?;
 
         let mut textures = Vec::new();
         for td in &bsp.tex_data {
             let name = &bsp.texdata_string_table[td.name_index as usize];
+            let path = format!("MATERIALS/{name}.VMT");
+            if let Ok(Some(vmt)) = renderer.fs.lock().read_path(&path) {
+                let vmt = String::from_utf8_lossy(&vmt);
+                println!("Loaded VMT: {}", vmt);
+            };
+
             let path = format!("MATERIALS/{name}.VTF");
             let (texture, view) = match load_vtf(&renderer.fs, iad, &path) {
                 Ok(o) => o,

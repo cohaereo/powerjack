@@ -33,3 +33,4 @@ bitflags = "2.9.3"
 lazy_static = "1.5.0"
 zip = { version = "4.6.0", default-features = false }
 parking_lot = "0.12.4"
+rayon = "1.11.0"

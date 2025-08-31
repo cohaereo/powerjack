@@ -1,15 +1,17 @@
-use std::{fs::File, path::PathBuf, rc::Rc, sync::Arc, time::Instant};
+use std::{fs::File, io::BufReader, path::PathBuf, rc::Rc, sync::Arc, time::Instant};
 
 use anyhow::Context as _;
 use clap::Parser;
 use game_detector::InstalledGame;
 use image::EncodableLayout;
 use parking_lot::Mutex;
+use powerjack_vpk::VpkFile;
+use rayon::iter::{IntoParallelRefIterator, ParallelIterator};
 use tracing::level_filters::LevelFilter;
 use tracing_subscriber::{layer::SubscriberExt, EnvFilter};
 
 use crate::{
-    fs::{Filesystem, SharedFilesystem},
+    fs::{Filesystem, Mountable, SharedFilesystem},
     renderer::bsp::BspStaticRenderer,
 };
 
@@ -53,9 +55,30 @@ fn main() -> anyhow::Result<()> {
     let args = args::Args::parse();
 
     let mut fs = Filesystem::default();
-    fs.mount_vpk(tf_dir.join("tf2_textures_dir.vpk"))?;
-    fs.mount_vpk(hl2_dir.join("hl2_textures_dir.vpk"))?;
+    let mount_paths = [
+        tf_dir.join("tf2_textures_dir.vpk"),
+        hl2_dir.join("hl2_textures_dir.vpk"),
+        tf_dir.join("tf2_misc_dir.vpk"),
+        hl2_dir.join("hl2_misc_dir.vpk"),
+    ];
+    let mounts: Vec<anyhow::Result<Box<dyn Mountable>>> = mount_paths
+        .par_iter()
+        .map(|path| {
+            info!("Reading VPK {}", path.display());
+            let f = BufReader::with_capacity(1024 * 1024, File::open(path)?);
+            let boxed: Box<dyn Mountable> =
+                Box::new(VpkFile::new(f, Some(path.to_string_lossy().to_string()))?);
+            Ok(boxed)
+        })
+        .collect();
+    for mount in mounts {
+        fs.add_mount(mount?);
+    }
+
+    // fs.mount_vpk(tf_dir.join("tf2_textures_dir.vpk"))?;
+    // fs.mount_vpk(hl2_dir.join("hl2_textures_dir.vpk"))?;
     // fs.mount_vpk(tf_dir.join("tf2_misc_dir.vpk"))?;
+    // fs.mount_vpk(hl2_dir.join("hl2_misc_dir.vpk"))?;
     // fs.mount_vpk(tf_dir.join("tf2_sound_misc_dir.vpk"))?;
     // if let Err(e) = fs.mount_vpk(tf_dir.join("tf2_sound_vo_english_dir.vpk")) {
     //     error!("Failed to mount tf2_sound_vo_english_dir.vpk: {e}");
