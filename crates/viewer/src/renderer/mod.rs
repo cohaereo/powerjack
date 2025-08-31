@@ -3,7 +3,10 @@ use std::sync::Arc;
 use anyhow::Context;
 use wgpu::rwh::{HasDisplayHandle, HasWindowHandle};
 
-use crate::renderer::{bsp::BspStaticRenderer, iad::InstanceAdapterDevice};
+use crate::{
+    fs::SharedFilesystem,
+    renderer::{bsp::BspStaticRenderer, iad::InstanceAdapterDevice},
+};
 
 pub mod bsp;
 pub mod camera;
@@ -14,6 +17,7 @@ pub struct Renderer<'a> {
     pub iad: Arc<InstanceAdapterDevice>,
     pub surface: wgpu::Surface<'a>,
     pub surface_config: wgpu::SurfaceConfiguration,
+    fs: SharedFilesystem,
 
     depth: wgpu::Texture,
     depth_view: wgpu::TextureView,
@@ -22,7 +26,7 @@ pub struct Renderer<'a> {
 }
 
 impl<'a> Renderer<'a> {
-    pub fn new(window: &sdl3::video::Window) -> anyhow::Result<Self> {
+    pub fn new(window: &sdl3::video::Window, fs: &SharedFilesystem) -> anyhow::Result<Self> {
         let iad = pollster::block_on(InstanceAdapterDevice::new())?;
         let surface = unsafe {
             iad.instance
@@ -64,6 +68,7 @@ impl<'a> Renderer<'a> {
             surface_config,
             depth,
             depth_view,
+            fs: Arc::clone(fs),
             camera: camera::Camera::default(),
         })
     }

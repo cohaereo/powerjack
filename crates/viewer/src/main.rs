@@ -1,15 +1,20 @@
-use std::{fs::File, path::PathBuf, rc::Rc, time::Instant};
+use std::{fs::File, path::PathBuf, rc::Rc, sync::Arc, time::Instant};
 
 use anyhow::Context as _;
 use clap::Parser;
 use game_detector::InstalledGame;
 use image::EncodableLayout;
+use parking_lot::Mutex;
 use tracing::level_filters::LevelFilter;
 use tracing_subscriber::{layer::SubscriberExt, EnvFilter};
 
-use crate::renderer::bsp::BspStaticRenderer;
+use crate::{
+    fs::{Filesystem, SharedFilesystem},
+    renderer::bsp::BspStaticRenderer,
+};
 
 pub mod args;
+pub mod fs;
 pub mod renderer;
 
 #[macro_use]
@@ -42,8 +47,18 @@ fn main() -> anyhow::Result<()> {
         panic!("TF2 installation not found");
     };
 
-    let _tf2_path = PathBuf::from(tf2_path);
+    let tf2_path = PathBuf::from(tf2_path);
+    let tf_dir = tf2_path.join("tf");
     let args = args::Args::parse();
+
+    let mut fs = Filesystem::default();
+    fs.mount_vpk(tf_dir.join("tf2_textures_dir.vpk"))?;
+    // fs.mount_vpk(tf_dir.join("tf2_misc_dir.vpk"))?;
+    // fs.mount_vpk(tf_dir.join("tf2_sound_misc_dir.vpk"))?;
+    // if let Err(e) = fs.mount_vpk(tf_dir.join("tf2_sound_vo_english_dir.vpk")) {
+    //     error!("Failed to mount tf2_sound_vo_english_dir.vpk: {e}");
+    // }
+    let fs: SharedFilesystem = Arc::new(Mutex::new(fs));
 
     let sdl_context = Rc::new(sdl3::init().unwrap());
     let video_subsystem = sdl_context.video().unwrap();
@@ -72,7 +87,7 @@ fn main() -> anyhow::Result<()> {
 
     video_subsystem.text_input().start(&window);
 
-    let mut renderer = renderer::Renderer::new(&window)?;
+    let mut renderer = renderer::Renderer::new(&window, &fs)?;
     let mut bsp = BspStaticRenderer::load(
         File::open(&args.bsp).context("Failed to open bsp file")?,
         &renderer.iad,

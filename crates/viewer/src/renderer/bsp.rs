@@ -208,8 +208,8 @@ impl BspStaticRenderer {
                 {
                     let tu = Vec4::from(ti.texture_vecs[0]);
                     let tv = Vec4::from(ti.texture_vecs[1]);
-                    v.uv.x = tu.x * v.position.x + tu.y * v.position.y + tu.z * v.position.z + tu.w;
-                    v.uv.y = tv.x * v.position.x + tv.y * v.position.y + tv.z * v.position.z + tv.w;
+                    v.uv.x = tu.dot(v.position.extend(1.0));
+                    v.uv.y = tv.dot(v.position.extend(1.0));
 
                     v.uv.x /= td.width as f32;
                     v.uv.y /= td.height as f32;

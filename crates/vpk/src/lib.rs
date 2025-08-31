@@ -1,58 +1,25 @@
-// VPK Headers (v2 only!)
-
 use anyhow::Context;
-use binrw::{BinRead, BinReaderExt, NullString};
-use std::collections::HashMap;
+use binrw::{BinReaderExt, NullString};
 use std::fs::File;
 use std::io::{Read, Seek, SeekFrom};
 use std::path::Path;
 
-#[derive(BinRead)]
-#[br(magic = b"\x34\x12\xAA\x55")]
-pub struct VpkHeader {
-    #[br(assert(version == 2, "VPK version must be 2 (v1 is not supported)"))]
-    pub version: u32,
+use crate::hasher::HashMapCaseInsensitive;
+use crate::structs::{VpkDirectoryEntry, VpkHeader};
 
-    /// The size, in bytes, of the directory tree
-    pub tree_size: u32,
-    /// How many bytes of file content are stored in this VPK file (0 in CSGO)
-    pub file_data_section_size: u32,
-    /// The size, in bytes, of the section containing MD5 checksums for external archive content
-    pub archive_md5_section_size: u32,
-    /// The size, in bytes, of the section containing MD5 checksums for content in this file (should always be 48)
-    pub other_md5_section_size: u32,
-    /// The size, in bytes, of the section containing the public key and signature. This is either 0 (CSGO & The Ship) or 296 (HL2, HL2:DM, HL2:EP1, HL2:EP2, HL2:LC, TF2, DOD:S & CS:S)
-    pub signature_section_size: u32,
-} // Total size: 28
-
-#[derive(BinRead, Debug)]
-pub struct VpkDirectoryEntry {
-    pub crc: u32,
-    pub preload_bytes: u16,
-    pub archive_index: u16,
-    pub entry_offset: u32,
-    pub entry_length: u32,
-
-    #[br(assert(terminator == 0xFFFF))]
-    pub terminator: u16,
-}
-
-impl VpkDirectoryEntry {
-    pub fn is_preload(&self) -> bool {
-        self.preload_bytes > 0
-    }
-}
+mod hasher;
+mod structs;
 
 #[derive(Debug)]
 pub struct VpkDirectoryPath {
-    pub files: HashMap<String, VpkDirectoryEntry>,
+    pub files: HashMapCaseInsensitive<String, VpkDirectoryEntry>,
 }
 
 pub struct VpkFile<R: Read + Seek> {
     reader: R,
     pub header: VpkHeader,
     /// Maps file extensions to a list of paths
-    pub directory: HashMap<String, HashMap<String, VpkDirectoryPath>>,
+    pub directory: HashMapCaseInsensitive<String, HashMapCaseInsensitive<String, VpkDirectoryPath>>,
 
     dir_path: Option<String>,
 }
@@ -71,8 +38,10 @@ impl<R: Read + Seek> VpkFile<R> {
 
     fn read_directory(
         r: &mut R,
-    ) -> anyhow::Result<HashMap<String, HashMap<String, VpkDirectoryPath>>> {
-        let mut directory = HashMap::default();
+    ) -> anyhow::Result<
+        HashMapCaseInsensitive<String, HashMapCaseInsensitive<String, VpkDirectoryPath>>,
+    > {
+        let mut directory = HashMapCaseInsensitive::default();
         loop {
             let extension = r
                 .read_le::<NullString>()
@@ -82,7 +51,7 @@ impl<R: Read + Seek> VpkFile<R> {
                 break;
             }
 
-            let mut paths = HashMap::default();
+            let mut paths = HashMapCaseInsensitive::default();
             loop {
                 let path = r
                     .read_le::<NullString>()
@@ -92,7 +61,7 @@ impl<R: Read + Seek> VpkFile<R> {
                     break;
                 }
 
-                let mut path_files = HashMap::default();
+                let mut path_files = HashMapCaseInsensitive::default();
 
                 loop {
                     let filename = r
@@ -126,7 +95,7 @@ impl<R: Read + Seek> VpkFile<R> {
         &mut self,
         path: impl AsRef<str>,
     ) -> anyhow::Result<Option<Vec<u8>>> {
-        let path = path.as_ref().replace("\\", "/").to_lowercase();
+        let path = path.as_ref().replace("\\", "/");
         let path = Path::new(&path);
         let extension = path
             .extension()
