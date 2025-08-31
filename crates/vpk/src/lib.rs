@@ -1,25 +1,24 @@
 use anyhow::Context;
 use binrw::{BinReaderExt, NullString};
+use case_insensitive_hashmap::CaseInsensitiveHashMap;
 use std::fs::File;
 use std::io::{Read, Seek, SeekFrom};
 use std::path::Path;
 
-use crate::hasher::HashMapCaseInsensitive;
 use crate::structs::{VpkDirectoryEntry, VpkHeader};
 
-mod hasher;
 mod structs;
 
 #[derive(Debug)]
 pub struct VpkDirectoryPath {
-    pub files: HashMapCaseInsensitive<String, VpkDirectoryEntry>,
+    pub files: CaseInsensitiveHashMap<VpkDirectoryEntry>,
 }
 
 pub struct VpkFile<R: Read + Seek> {
     reader: R,
     pub header: VpkHeader,
     /// Maps file extensions to a list of paths
-    pub directory: HashMapCaseInsensitive<String, HashMapCaseInsensitive<String, VpkDirectoryPath>>,
+    pub directory: CaseInsensitiveHashMap<CaseInsensitiveHashMap<VpkDirectoryPath>>,
 
     dir_path: Option<String>,
 }
@@ -38,10 +37,8 @@ impl<R: Read + Seek> VpkFile<R> {
 
     fn read_directory(
         r: &mut R,
-    ) -> anyhow::Result<
-        HashMapCaseInsensitive<String, HashMapCaseInsensitive<String, VpkDirectoryPath>>,
-    > {
-        let mut directory = HashMapCaseInsensitive::default();
+    ) -> anyhow::Result<CaseInsensitiveHashMap<CaseInsensitiveHashMap<VpkDirectoryPath>>> {
+        let mut directory = CaseInsensitiveHashMap::new();
         loop {
             let extension = r
                 .read_le::<NullString>()
@@ -51,7 +48,7 @@ impl<R: Read + Seek> VpkFile<R> {
                 break;
             }
 
-            let mut paths = HashMapCaseInsensitive::default();
+            let mut paths = CaseInsensitiveHashMap::new();
             loop {
                 let path = r
                     .read_le::<NullString>()
@@ -61,7 +58,7 @@ impl<R: Read + Seek> VpkFile<R> {
                     break;
                 }
 
-                let mut path_files = HashMapCaseInsensitive::default();
+                let mut path_files = CaseInsensitiveHashMap::new();
 
                 loop {
                     let filename = r
@@ -110,6 +107,7 @@ impl<R: Read + Seek> VpkFile<R> {
         let filename = path.file_stem().context("Path does not have a filename")?;
 
         let Some(extension) = self.directory.get(extension) else {
+            println!("Extension not found: {}", extension);
             return Ok(None);
         };
         let Some(path) = extension.get(
