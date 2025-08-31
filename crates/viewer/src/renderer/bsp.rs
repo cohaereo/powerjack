@@ -6,15 +6,16 @@ use std::{
 };
 
 use anyhow::Context;
-use bitflags::bitflags;
 use bytemuck::{Pod, Zeroable};
 use glam::{IVec2, Mat4, Vec2, Vec3, Vec4};
+use keyvalues_parser::Vdf;
 use powerjack_bsp::{lumps::BspFace, Bsp, BspFile};
 use wgpu::util::DeviceExt;
 
 use crate::renderer::{
     iad::InstanceAdapterDevice,
     reloadable_pipeline::{ReloadablePipeline, ShaderSource},
+    vmt::get_basetexture_for_vmt,
     vtf::{create_fallback_texture, load_vtf},
     Renderer,
 };
@@ -46,16 +47,20 @@ impl BspStaticRenderer {
         for td in &bsp.tex_data {
             let name = &bsp.texdata_string_table[td.name_index as usize];
             let path = format!("MATERIALS/{name}.VMT");
-            if let Ok(Some(vmt)) = renderer.fs.lock().read_path(&path) {
-                let vmt = String::from_utf8_lossy(&vmt);
-                println!("Loaded VMT: {}", vmt);
-            };
-
-            let path = format!("MATERIALS/{name}.VTF");
-            let (texture, view) = match load_vtf(&renderer.fs, iad, &path) {
-                Ok(o) => o,
+            let (texture, view) = match get_basetexture_for_vmt(&renderer.fs, &path) {
+                Ok(Some(basetexture)) => {
+                    let path = format!("MATERIALS/{basetexture}.VTF");
+                    match load_vtf(&renderer.fs, iad, &path) {
+                        Ok(o) => o,
+                        Err(e) => {
+                            error!("Failed to load texture {path}: {e}");
+                            create_fallback_texture(iad, [255, 0, 255])
+                        }
+                    }
+                }
+                Ok(None) => create_fallback_texture(iad, [255, 0, 0]),
                 Err(e) => {
-                    error!("Failed to load texture {path}: {e}");
+                    error!("Failed to load VMT {path}: {e}");
                     create_fallback_texture(iad, [255, 0, 255])
                 }
             };

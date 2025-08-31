@@ -11,7 +11,6 @@ pub fn load_vtf(
     iad: &InstanceAdapterDevice,
     path: &str,
 ) -> anyhow::Result<(wgpu::Texture, wgpu::TextureView)> {
-    info!("Loading VTF texture '{path}'");
     let Some(vtf_data) = fs
         .lock()
         .read_path(path)

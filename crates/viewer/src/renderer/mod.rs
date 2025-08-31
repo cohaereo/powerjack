@@ -12,6 +12,7 @@ pub mod bsp;
 pub mod camera;
 pub mod iad;
 pub mod reloadable_pipeline;
+pub mod vmt;
 pub mod vtf;
 
 pub struct Renderer<'a> {
