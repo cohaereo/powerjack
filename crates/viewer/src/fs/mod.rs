@@ -5,9 +5,9 @@ use std::{
     sync::Arc,
 };
 
-use ::zip::ZipArchive;
 use parking_lot::Mutex;
 use powerjack_vpk::VpkFile;
+use zip_lzma::ZipArchive;
 
 pub mod vpk;
 pub mod zip;

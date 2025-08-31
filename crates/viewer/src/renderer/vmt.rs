@@ -13,6 +13,11 @@ pub fn get_basetexture_for_vmt(
     };
     let data_str = String::from_utf8_lossy(&data);
     let vdf = Vdf::parse(&data_str)?;
+    match vdf.key.as_ref().to_lowercase().as_str() {
+        "lightmappedgeneric" | "patch" | "unlitgeneric" | "worldvertextransition" => {}
+        u => anyhow::bail!("Unsupported material type '{u}'"),
+    }
+
     let obj = vdf.value.clone().unwrap_obj();
 
     if let Some(basetexture) = obj.get("$basetexture").or_else(|| obj.get("$baseTexture")) {
@@ -23,5 +28,5 @@ pub fn get_basetexture_for_vmt(
         return get_basetexture_for_vmt(fs, &include[0].clone().unwrap_str());
     }
 
-    Err(anyhow!("Material has no basetexture"))
+    Err(anyhow!("Material has no basetexture {vdf}"))
 }
