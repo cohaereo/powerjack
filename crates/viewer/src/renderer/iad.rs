@@ -39,12 +39,16 @@ impl InstanceAdapterDevice {
             max_texture_dimension_1d: 8192,
             max_texture_dimension_2d: 8192,
             max_push_constant_size: 256,
+            max_binding_array_elements_per_shader_stage: 4096,
             ..wgpu::Limits::defaults()
         };
         let (device, queue) = adapter
             .request_device(&wgpu::DeviceDescriptor {
                 required_features: wgpu::Features::PUSH_CONSTANTS
-                    | wgpu::Features::TEXTURE_COMPRESSION_BC,
+                    | wgpu::Features::TEXTURE_COMPRESSION_BC
+                    | wgpu::Features::TEXTURE_BINDING_ARRAY
+                    | wgpu::Features::BUFFER_BINDING_ARRAY
+                    | wgpu::Features::SAMPLED_TEXTURE_AND_STORAGE_BUFFER_ARRAY_NON_UNIFORM_INDEXING,
                 required_limits,
                 label: None,
                 memory_hints: wgpu::MemoryHints::Performance,

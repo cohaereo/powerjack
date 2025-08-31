@@ -12,12 +12,13 @@ pub mod bsp;
 pub mod camera;
 pub mod iad;
 pub mod reloadable_pipeline;
+pub mod vtf;
 
 pub struct Renderer<'a> {
     pub iad: Arc<InstanceAdapterDevice>,
     pub surface: wgpu::Surface<'a>,
     pub surface_config: wgpu::SurfaceConfiguration,
-    fs: SharedFilesystem,
+    pub(super) fs: SharedFilesystem,
 
     depth: wgpu::Texture,
     depth_view: wgpu::TextureView,

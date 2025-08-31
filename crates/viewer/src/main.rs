@@ -49,9 +49,11 @@ fn main() -> anyhow::Result<()> {
 
     let tf2_path = PathBuf::from(tf2_path);
     let tf_dir = tf2_path.join("tf");
+    let hl2_dir = tf2_path.join("hl2");
     let args = args::Args::parse();
 
     let mut fs = Filesystem::default();
+    fs.mount_vpk(hl2_dir.join("hl2_textures_dir.vpk"))?;
     fs.mount_vpk(tf_dir.join("tf2_textures_dir.vpk"))?;
     // fs.mount_vpk(tf_dir.join("tf2_misc_dir.vpk"))?;
     // fs.mount_vpk(tf_dir.join("tf2_sound_misc_dir.vpk"))?;
@@ -90,7 +92,7 @@ fn main() -> anyhow::Result<()> {
     let mut renderer = renderer::Renderer::new(&window, &fs)?;
     let mut bsp = BspStaticRenderer::load(
         File::open(&args.bsp).context("Failed to open bsp file")?,
-        &renderer.iad,
+        &renderer,
     )?;
     info!("Loaded '{}'", args.bsp);
 

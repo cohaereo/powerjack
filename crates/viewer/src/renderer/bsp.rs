@@ -1,6 +1,7 @@
 use std::{
     f32,
     io::{Read, Seek},
+    num::NonZeroU32,
     ops::Range,
 };
 
@@ -14,6 +15,8 @@ use wgpu::util::DeviceExt;
 use crate::renderer::{
     iad::InstanceAdapterDevice,
     reloadable_pipeline::{ReloadablePipeline, ShaderSource},
+    vtf::{create_fallback_texture, load_vtf},
+    Renderer,
 };
 
 pub struct BspStaticRenderer {
@@ -24,15 +27,33 @@ pub struct BspStaticRenderer {
     index_count: u32,
 
     lightmap_bindgroup: wgpu::BindGroup,
+    texture_bindgroup: wgpu::BindGroup,
 
     faces: Vec<(Range<u32>, BspFace)>,
     pipeline: ReloadablePipeline,
 }
 
 impl BspStaticRenderer {
-    pub fn load<R: Read + Seek>(reader: R, iad: &InstanceAdapterDevice) -> anyhow::Result<Self> {
+    pub fn load<R: Read + Seek>(reader: R, renderer: &Renderer) -> anyhow::Result<Self> {
+        let iad = &renderer.iad;
+
         let mut file = BspFile::new(reader)?;
         let bsp = Bsp::parse(&mut file)?;
+
+        let mut textures = Vec::new();
+        for td in &bsp.tex_data {
+            let name = &bsp.texdata_string_table[td.name_index as usize];
+            let path = format!("MATERIALS/{name}.VTF");
+            let (texture, view) = match load_vtf(&renderer.fs, iad, &path) {
+                Ok(o) => o,
+                Err(e) => {
+                    error!("Failed to load texture {path}: {e}");
+                    create_fallback_texture(iad, [255, 0, 255])
+                }
+            };
+
+            textures.push((texture, view));
+        }
 
         let mut gpu_faces = Vec::with_capacity(bsp.faces.len());
         let mut face_vertices: Vec<StaticMapVertex> = vec![];
@@ -45,16 +66,17 @@ impl BspStaticRenderer {
             .iter()
             .enumerate()
         {
-            let mut flags = FaceFlags::empty();
-            flags.set(FaceFlags::DISPLACEMENT, f.disp_info >= 0);
+            let ti = &bsp.tex_info[f.tex_info as usize];
+            let td = &bsp.tex_data[ti.tex_data as usize];
+
+            // let mut flags = FaceFlags::empty();
+            // flags.set(FaceFlags::DISPLACEMENT, f.disp_info >= 0);
             gpu_faces.push(GpuMapFace {
                 lightmap_face_size: IVec2::from(f.lightmap_size) + IVec2::ONE,
                 lightmap_offset: f.lightmap_data_offset / 4,
-                flags,
+                texture_index: ti.tex_data,
+                // flags,
             });
-
-            let ti = &bsp.tex_info[f.tex_info as usize];
-            let td = &bsp.tex_data[ti.tex_data as usize];
             let color = Vec3::from([
                 td.reflectivity[0].sqrt(),
                 td.reflectivity[1].sqrt(),
@@ -318,9 +340,58 @@ impl BspStaticRenderer {
             ],
         });
 
+        let texture_bindgroup_layout =
+            iad.create_bind_group_layout(&wgpu::BindGroupLayoutDescriptor {
+                label: None,
+                entries: &[
+                    wgpu::BindGroupLayoutEntry {
+                        binding: 0,
+                        visibility: wgpu::ShaderStages::FRAGMENT,
+                        ty: wgpu::BindingType::Texture {
+                            sample_type: wgpu::TextureSampleType::Float { filterable: true },
+                            view_dimension: wgpu::TextureViewDimension::D2,
+                            multisampled: false,
+                        },
+                        count: NonZeroU32::new(textures.len() as u32),
+                    },
+                    wgpu::BindGroupLayoutEntry {
+                        binding: 1,
+                        visibility: wgpu::ShaderStages::FRAGMENT,
+                        ty: wgpu::BindingType::Sampler(wgpu::SamplerBindingType::Filtering),
+                        count: None,
+                    },
+                ],
+            });
+
+        let sampler = iad.create_sampler(&wgpu::SamplerDescriptor {
+            address_mode_u: wgpu::AddressMode::Repeat,
+            address_mode_v: wgpu::AddressMode::Repeat,
+            address_mode_w: wgpu::AddressMode::Repeat,
+            mag_filter: wgpu::FilterMode::Linear,
+            min_filter: wgpu::FilterMode::Linear,
+            mipmap_filter: wgpu::FilterMode::Linear,
+            ..Default::default()
+        });
+
+        let texture_views = textures.iter().map(|(_, view)| view).collect::<Vec<_>>();
+        let texture_bindgroup = iad.create_bind_group(&wgpu::BindGroupDescriptor {
+            label: None,
+            layout: &texture_bindgroup_layout,
+            entries: &[
+                wgpu::BindGroupEntry {
+                    binding: 0,
+                    resource: wgpu::BindingResource::TextureViewArray(&texture_views),
+                },
+                wgpu::BindGroupEntry {
+                    binding: 1,
+                    resource: wgpu::BindingResource::Sampler(&sampler),
+                },
+            ],
+        });
+
         let pipeline_layout = iad.create_pipeline_layout(&wgpu::PipelineLayoutDescriptor {
             label: None,
-            bind_group_layouts: &[&lightmap_bindgroup_layout],
+            bind_group_layouts: &[&lightmap_bindgroup_layout, &texture_bindgroup_layout],
             push_constant_ranges: &[wgpu::PushConstantRange {
                 range: 0..64,
                 stages: wgpu::ShaderStages::VERTEX,
@@ -379,6 +450,7 @@ impl BspStaticRenderer {
             index_buffer,
             index_count: indices.len() as u32,
             lightmap_bindgroup,
+            texture_bindgroup,
             faces,
             pipeline,
         })
@@ -392,6 +464,7 @@ impl BspStaticRenderer {
     ) {
         pass.set_pipeline(&self.pipeline.compiled_pipeline(iad));
         pass.set_bind_group(0, &self.lightmap_bindgroup, &[]);
+        pass.set_bind_group(1, &self.texture_bindgroup, &[]);
         pass.set_push_constants(
             wgpu::ShaderStages::VERTEX,
             0,
@@ -401,7 +474,7 @@ impl BspStaticRenderer {
         pass.set_index_buffer(self.index_buffer.slice(..), wgpu::IndexFormat::Uint32);
 
         // pass.draw_indexed(0..self.index_count, 0, 0..1);
-        for (draw_range, face) in &self.faces {
+        for (draw_range, _face) in &self.faces {
             pass.draw_indexed(draw_range.clone(), 0, 0..1);
         }
     }
@@ -458,16 +531,18 @@ impl StaticMapVertex {
 pub struct GpuMapFace {
     pub lightmap_face_size: IVec2,
     pub lightmap_offset: i32,
-    pub flags: FaceFlags,
+    // pub flags: FaceFlags,
+    // pub flags_and_texture_index: u32,
+    pub texture_index: i32,
 }
 
-bitflags! {
-    #[derive(Default, Copy, Clone, Debug)]
-    #[repr(C)]
-    struct FaceFlags: u32 {
-        const DISPLACEMENT = (1 << 0);
-    }
-}
+// bitflags! {
+//     #[derive(Default, Copy, Clone, Debug)]
+//     #[repr(C)]
+//     pub struct FaceFlags: u16 {
+//         const DISPLACEMENT = (1 << 0);
+//     }
+// }
 
-unsafe impl bytemuck::Zeroable for FaceFlags {}
-unsafe impl bytemuck::Pod for FaceFlags {}
+// unsafe impl bytemuck::Zeroable for FaceFlags {}
+// unsafe impl bytemuck::Pod for FaceFlags {}

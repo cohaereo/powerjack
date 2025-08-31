@@ -34,15 +34,25 @@ fn vs_main(
 struct MapFace {
     lightmap_size: vec2<u32>,
     lightmap_offset: i32,
-    flags: u32,
+    // flags: u32,
+    texture_index: i32,
 }
 
 @group(0)
 @binding(0)
 var<storage, read> r_lightmap: array<u32>;
+
 @group(0)
 @binding(1)
 var<storage, read> r_faces: array<MapFace>;
+
+@group(1)
+@binding(0)
+var r_texture_array: binding_array<texture_2d<f32>>;
+
+@group(1)
+@binding(1)
+var r_sampler_linear: sampler;
 
 // @group(1)
 // @binding(0)
@@ -94,5 +104,12 @@ fn fs_main(vertex: VertexOutput) -> @location(0) vec4<f32> {
         light = sample_lightmap_bilinear(vertex.lightmap_texcoord, face);
     }
 
-    return vec4(light * vertex.color.xyz, 1.0);
+    var sample = textureSampleLevel(
+        r_texture_array[face.texture_index],
+        r_sampler_linear,
+        vertex.texcoord,
+        0.0
+    );
+
+    return vec4(light * sample.xyz, 1.0);
 }

@@ -7,8 +7,10 @@ edition = "2021"
 powerjack-bsp = { path = "../bsp" }
 powerjack-demo = { path = "../demo" }
 powerjack-vpk = { path = "../vpk" }
+powerjack-vtf = { path = "../vtf" }
 
 anyhow = "1"
+binrw.workspace = true
 bytemuck = { version = "1.23.2", features = ["derive"] }
 clap = { version = "4.5.45", features = ["derive"] }
 game-detector = { version = "0.1.5", features = [
