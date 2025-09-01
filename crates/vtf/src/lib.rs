@@ -129,7 +129,7 @@ impl VtfResource {
     pub const TAG_KV: [u8; 3] = *b"KVD";
 }
 
-#[derive(BinRead, Debug)]
+#[derive(BinRead, Debug, Clone, Copy)]
 #[br(repr(u32))]
 pub enum VtfTextureFormat {
     None = -1,

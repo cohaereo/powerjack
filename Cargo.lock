@@ -1128,6 +1128,7 @@ dependencies = [
  "pollster",
  "powerjack-bsp",
  "powerjack-demo",
+ "powerjack-mdl",
  "powerjack-vpk",
  "powerjack-vtf",
  "rayon",
@@ -1163,6 +1164,15 @@ dependencies = [
  "chroma-dbg",
  "glam",
  "powerjack-bitbuf",
+]
+
+[[package]]
+name = "powerjack-mdl"
+version = "0.0.0"
+dependencies = [
+ "anyhow",
+ "binrw",
+ "bitflags 2.9.3",
 ]
 
 [[package]]

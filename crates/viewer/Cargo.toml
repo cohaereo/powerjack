@@ -1,11 +1,12 @@
 [package]
 name = "powerjack"
 version = "0.0.0"
-edition = "2021"
+edition = "2024"
 
 [dependencies]
 powerjack-bsp = { path = "../bsp" }
 powerjack-demo = { path = "../demo" }
+powerjack-mdl = { path = "../mdl" }
 powerjack-vpk = { path = "../vpk" }
 powerjack-vtf = { path = "../vtf" }
 

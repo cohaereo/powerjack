@@ -1,15 +1,19 @@
 use std::sync::Arc;
 
 use anyhow::Context;
-use wgpu::rwh::{HasDisplayHandle, HasWindowHandle};
+use glam::Mat4;
+use wgpu::{
+    rwh::{HasDisplayHandle, HasWindowHandle},
+    RenderPass,
+};
 
 use crate::{
     fs::SharedFilesystem,
-    renderer::{bsp::BspStaticRenderer, iad::InstanceAdapterDevice},
+    renderer::{features::bsp::BspStaticRenderer, iad::InstanceAdapterDevice},
 };
 
-pub mod bsp;
 pub mod camera;
+pub mod features;
 pub mod iad;
 pub mod reloadable_pipeline;
 pub mod vmt;
@@ -100,7 +104,10 @@ impl<'a> Renderer<'a> {
             .create_view(&wgpu::TextureViewDescriptor::default());
     }
 
-    pub fn render(&mut self, map: &mut BspStaticRenderer) {
+    pub fn render<F>(&mut self, map: &mut BspStaticRenderer, render: F)
+    where
+        F: FnOnce(&mut Self, &mut RenderPass, Mat4),
+    {
         let Ok(frame) = self.surface.get_current_texture() else {
             return;
         };
@@ -138,12 +145,11 @@ impl<'a> Renderer<'a> {
             });
 
             let size = frame.texture.size();
-            map.render(
-                &self.iad,
-                &mut rpass,
-                self.camera
-                    .world_to_projective(size.width as f32 / size.height as f32),
-            );
+            let world_to_projective = self
+                .camera
+                .world_to_projective(size.width as f32 / size.height as f32);
+            map.render(&self.iad, &mut rpass, world_to_projective);
+            render(self, &mut rpass, world_to_projective);
         }
 
         self.iad.queue.submit(Some(encoder.finish()));

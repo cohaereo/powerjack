@@ -60,7 +60,8 @@ pub fn load_vtf_data<R: Read + Seek>(
 
     Ok((
         data,
-        vtf_texture_format_to_wgpu(fmt).context("Failed to convert VTF image format to WGPU")?,
+        vtf_texture_format_to_wgpu(fmt)
+            .with_context(|| format!("Failed to convert VTF image format {fmt:?} to WGPU"))?,
         vtf.width as u32,
         vtf.height as u32,
     ))

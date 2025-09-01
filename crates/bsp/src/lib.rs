@@ -3,10 +3,14 @@ use binrw::{BinRead, BinReaderExt, BinWriterExt};
 use lumps::{BspColorRgbExp, BspFace, BspModel, BspPlane, BspTexData, BspTexInfo};
 use std::io::{Cursor, Read, Seek, SeekFrom, Write};
 
-use crate::lumps::{BspDispInfo, BspDispTri, BspDispVert};
+use crate::{
+    gamelumps::{StaticPropDictLump, StaticPropLeafLump, StaticPropLump},
+    lumps::{BspDispInfo, BspDispTri, BspDispVert, BspGameLump, BspGameLumpHeader},
+};
 
 pub const BSP_LUMP_COUNT: usize = 64;
 
+pub mod gamelumps;
 pub mod lumps;
 
 #[derive(BinRead, Debug)]
@@ -36,21 +40,15 @@ impl<R: Read + Seek> BspFile<R> {
         Ok(Self { reader, header })
     }
 
-    pub fn read_lump_raw(&mut self, index: usize) -> anyhow::Result<Vec<u8>> {
-        let lump = self
-            .header
-            .lumps
-            .get(index)
-            .context("Lump index out of bounds")?;
-
-        self.reader.seek(SeekFrom::Start(lump.offset as u64))?;
+    pub fn read_lump_raw_offset(&mut self, offset: u64, length: usize) -> anyhow::Result<Vec<u8>> {
+        self.reader.seek(SeekFrom::Start(offset))?;
         let id = self.reader.read_le::<[u8; 4]>()?;
-        if lump.length >= 4 && &id == b"LZMA" {
+        if length >= 4 && &id == b"LZMA" {
             let actual_size = self.reader.read_le::<u32>()?;
             let lzma_size = self.reader.read_le::<u32>()?;
             let lzma_properties: [u8; 5] = self.reader.read_le()?;
 
-            let mut fixed_lump = Cursor::new(Vec::with_capacity(lump.length as usize));
+            let mut fixed_lump = Cursor::new(Vec::with_capacity(length));
             fixed_lump.write_all(&lzma_properties)?;
             fixed_lump.write_le(&(actual_size as u64))?;
             let mut remaining_data = vec![0u8; lzma_size as usize];
@@ -63,14 +61,24 @@ impl<R: Read + Seek> BspFile<R> {
 
             Ok(decompressed_data)
         } else {
-            self.reader.seek(SeekFrom::Start(lump.offset as u64))?;
-            let mut data = vec![0u8; lump.length as usize];
+            self.reader.seek(SeekFrom::Start(offset))?;
+            let mut data = vec![0u8; length];
             self.reader.read_exact(&mut data)?;
             Ok(data)
         }
     }
 
-    pub fn read_lump<'a, T>(&mut self, index: usize) -> anyhow::Result<Vec<T>>
+    pub fn read_lump_raw(&mut self, index: usize) -> anyhow::Result<Vec<u8>> {
+        let lump = self
+            .header
+            .lumps
+            .get(index)
+            .context("Lump index out of bounds")?;
+
+        self.read_lump_raw_offset(lump.offset as u64, lump.length as usize)
+    }
+
+    pub fn read_lump_ex<'a, T>(&mut self, index: usize, max: usize) -> anyhow::Result<Vec<T>>
     where
         T: BinRead,
         T::Args<'a>: Default,
@@ -79,11 +87,19 @@ impl<R: Read + Seek> BspFile<R> {
         let mut cursor = Cursor::new(&data);
         let mut v = vec![];
         // TOOO(cohae): Might go wrong
-        while cursor.position() < data.len() as u64 {
+        while cursor.position() < data.len() as u64 && v.len() < max {
             v.push(cursor.read_le()?);
         }
 
         Ok(v)
+    }
+
+    pub fn read_lump<'a, T>(&mut self, index: usize) -> anyhow::Result<Vec<T>>
+    where
+        T: BinRead,
+        T::Args<'a>: Default,
+    {
+        self.read_lump_ex(index, usize::MAX)
     }
 }
 
@@ -114,6 +130,12 @@ pub struct Bsp {
     pub disp_tris: Vec<BspDispTri>,
 
     pub texdata_string_table: Vec<String>,
+
+    pub game_lumps: Vec<BspGameLump>,
+
+    pub static_prop_models: Vec<String>,
+    pub static_prop_leafs: Vec<u16>,
+    pub static_props: Vec<StaticPropLump>,
 }
 
 impl Bsp {
@@ -133,6 +155,27 @@ impl Bsp {
             })
             .collect();
 
+        let game_lumps = file.read_lump_ex::<BspGameLumpHeader>(35, 1)?[0]
+            .clone()
+            .lumps;
+
+        let mut static_prop_models = vec![];
+        let mut static_prop_leafs = vec![];
+        let mut static_props = vec![];
+
+        if let Some(sprp) = game_lumps.iter().find(|l| l.id == 0x73707270) {
+            let data = file.read_lump_raw_offset(sprp.fileofs as u64, sprp.filelen as usize)?;
+            let mut c = Cursor::new(data);
+            static_prop_models = c.read_le::<StaticPropDictLump>()?.names;
+            static_prop_leafs = c.read_le::<StaticPropLeafLump>()?.leaf;
+            let prop_count: u32 = c.read_le()?;
+            static_props = c.read_le_args::<Vec<StaticPropLump>>(
+                binrw::VecArgs::builder()
+                    .count(prop_count as usize)
+                    .finalize(),
+            )?;
+        }
+
         Ok(Self {
             planes: file.read_lump(1)?,
             vertices: file.read_lump(3)?,
@@ -147,6 +190,10 @@ impl Bsp {
             disp_verts: file.read_lump(33)?,
             disp_tris: file.read_lump(48)?,
             texdata_string_table,
+            game_lumps,
+            static_prop_models,
+            static_prop_leafs,
+            static_props,
         })
     }
 }

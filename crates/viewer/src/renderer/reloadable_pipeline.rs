@@ -108,10 +108,6 @@ impl ShaderSource {
         };
 
         if modified > sauce.last_change {
-            info!(
-                "File '{}' changed, loading new source",
-                sauce.load_path.display()
-            );
             sauce.last_change = modified;
             sauce.changed = true;
         }
@@ -150,7 +146,7 @@ impl ShaderSource {
     }
 }
 
-struct WatchedSource {
+pub struct WatchedSource {
     source: String,
     load_path: PathBuf,
     changed: bool,

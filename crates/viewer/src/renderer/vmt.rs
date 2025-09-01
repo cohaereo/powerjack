@@ -1,4 +1,4 @@
-use anyhow::{anyhow, Context};
+use anyhow::anyhow;
 use keyvalues_parser::Vdf;
 
 use crate::fs::SharedFilesystem;

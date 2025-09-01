@@ -1,7 +1,6 @@
-use binrw::BinRead;
+use binrw::{binread, BinRead};
 
 #[derive(BinRead, Debug, Clone)]
-// #[repr(C, packed)]
 pub struct BspFace {
     pub plane_num: u16,
     pub side: u8,
@@ -23,7 +22,6 @@ pub struct BspFace {
 }
 
 #[derive(BinRead, Debug, Clone)]
-#[repr(C, packed)]
 pub struct BspModel {
     pub mins: [f32; 3],
     pub maxs: [f32; 3],
@@ -34,7 +32,6 @@ pub struct BspModel {
 }
 
 #[derive(BinRead, Debug, Clone)]
-#[repr(C, packed)]
 pub struct BspPlane {
     pub normal: [f32; 3],
     pub dist: f32,
@@ -42,7 +39,6 @@ pub struct BspPlane {
 }
 
 #[derive(BinRead, Debug, Clone)]
-#[repr(C, packed)]
 pub struct BspTexInfo {
     pub texture_vecs: [[f32; 4]; 2],
     pub lightmap_vecs: [[f32; 4]; 2],
@@ -51,7 +47,6 @@ pub struct BspTexInfo {
 }
 
 #[derive(BinRead, Debug, Clone)]
-#[repr(C, packed)]
 pub struct BspTexData {
     pub reflectivity: [f32; 3],
     /// Index into texdata_string_table
@@ -63,7 +58,6 @@ pub struct BspTexData {
 }
 
 #[derive(BinRead, Clone, Copy, Debug)]
-#[repr(C, packed)]
 pub struct BspColorRgbExp {
     pub r: u8,
     pub g: u8,
@@ -91,7 +85,6 @@ impl BspColorRgbExp {
 }
 
 #[derive(BinRead, Debug, Clone)]
-#[repr(C, packed)]
 pub struct BspDispInfo {
     pub start_position: [f32; 3],
     pub disp_vert_start: i32,
@@ -108,7 +101,6 @@ pub struct BspDispInfo {
 }
 
 #[derive(BinRead, Debug, Clone)]
-#[repr(C, packed)]
 pub struct BspDispVert {
     pub vec: [f32; 3],
     pub dist: f32,
@@ -116,7 +108,24 @@ pub struct BspDispVert {
 }
 
 #[derive(BinRead, Debug, Clone)]
-#[repr(C, packed)]
 pub struct BspDispTri {
     pub tags: u16,
+}
+
+#[binread]
+#[derive(Debug, Clone)]
+pub struct BspGameLumpHeader {
+    #[br(temp)]
+    count: u32,
+    #[br(count = count)]
+    pub lumps: Vec<BspGameLump>,
+}
+
+#[derive(BinRead, Clone, Copy, Debug)]
+pub struct BspGameLump {
+    pub id: u32,
+    pub flags: u16,
+    pub version: u16,
+    pub fileofs: u32,
+    pub filelen: u32,
 }

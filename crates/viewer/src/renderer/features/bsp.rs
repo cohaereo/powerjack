@@ -8,7 +8,6 @@ use std::{
 use anyhow::Context;
 use bytemuck::{Pod, Zeroable};
 use glam::{IVec2, Mat4, Vec2, Vec3, Vec4};
-use keyvalues_parser::Vdf;
 use powerjack_bsp::{lumps::BspFace, Bsp, BspFile};
 use wgpu::util::DeviceExt;
 
@@ -21,7 +20,7 @@ use crate::renderer::{
 };
 
 pub struct BspStaticRenderer {
-    data: Bsp,
+    pub data: Bsp,
 
     vertex_buffer: wgpu::Buffer,
     index_buffer: wgpu::Buffer,
@@ -486,10 +485,10 @@ impl BspStaticRenderer {
         pass.set_vertex_buffer(0, self.vertex_buffer.slice(..));
         pass.set_index_buffer(self.index_buffer.slice(..), wgpu::IndexFormat::Uint32);
 
-        // pass.draw_indexed(0..self.index_count, 0, 0..1);
-        for (draw_range, _face) in &self.faces {
-            pass.draw_indexed(draw_range.clone(), 0, 0..1);
-        }
+        pass.draw_indexed(0..self.index_count, 0, 0..1);
+        // for (draw_range, _face) in &self.faces {
+        //     pass.draw_indexed(draw_range.clone(), 0, 0..1);
+        // }
     }
 }
 

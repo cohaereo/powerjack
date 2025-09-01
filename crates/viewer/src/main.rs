@@ -3,16 +3,17 @@ use std::{fs::File, io::BufReader, path::PathBuf, rc::Rc, sync::Arc, time::Insta
 use anyhow::Context as _;
 use clap::Parser;
 use game_detector::InstalledGame;
+use glam::{Mat4, Quat};
 use image::EncodableLayout;
 use parking_lot::Mutex;
 use powerjack_vpk::VpkFile;
 use rayon::iter::{IntoParallelRefIterator, ParallelIterator};
 use tracing::level_filters::LevelFilter;
-use tracing_subscriber::{layer::SubscriberExt, EnvFilter};
+use tracing_subscriber::{EnvFilter, layer::SubscriberExt};
 
 use crate::{
     fs::{Filesystem, Mountable, SharedFilesystem},
-    renderer::bsp::BspStaticRenderer,
+    renderer::features::{bsp::BspStaticRenderer, mdl::MdlRenderer},
 };
 
 pub mod args;
@@ -117,6 +118,36 @@ fn main() -> anyhow::Result<()> {
         File::open(&args.bsp).context("Failed to open bsp file")?,
         &renderer,
     )?;
+
+    let mut static_models = vec![];
+    for mdl_path in &bsp.data.static_prop_models {
+        info!("Loading model {mdl_path}");
+        match MdlRenderer::load(&renderer.fs, &renderer.iad, mdl_path) {
+            Ok(m) => static_models.push(Some(m)),
+            Err(e) => {
+                error!("Failed to load model {mdl_path}: {e}");
+                static_models.push(None);
+            }
+        }
+    }
+
+    let mut static_props = vec![];
+    for prop in &bsp.data.static_props {
+        static_props.push((
+            prop.model_index as usize,
+            Mat4::from_rotation_translation(
+                Quat::IDENTITY,
+                // Quat::from_euler(
+                //     glam::EulerRot::XYZ,
+                //     prop.angles[0],
+                //     prop.angles[1],
+                //     prop.angles[2],
+                // ),
+                prop.origin.into(),
+            ),
+        ));
+    }
+
     info!("Loaded '{}'", args.bsp);
 
     let mut event_pump = sdl_context.event_pump()?;
@@ -143,7 +174,15 @@ fn main() -> anyhow::Result<()> {
         }
 
         renderer.camera.update(dt);
-        renderer.render(&mut bsp);
+        renderer.render(&mut bsp, |renderer, rpass, world_to_projective| {
+            for (model_index, transform) in &static_props {
+                if let Some(model) = static_models.get_mut(*model_index)
+                    && let Some(model) = model
+                {
+                    model.render(&renderer.iad, rpass, world_to_projective, *transform);
+                }
+            }
+        });
     }
 
     Ok(())
