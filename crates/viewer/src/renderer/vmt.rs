@@ -1,3 +1,5 @@
+use std::collections::HashMap;
+
 use serde::{Deserialize, Deserializer, de::DeserializeOwned};
 
 use crate::fs::SharedFilesystem;
@@ -59,24 +61,26 @@ where
     T: DeserializeOwned,
     D: Deserializer<'de>,
 {
-    use serde_json::Value;
+    use vdf_reader::entry::Entry;
 
     use std::collections::BTreeMap as Map;
 
-    let map = Map::<String, Value>::deserialize(deserializer)?;
-    let lower = map
+    let map = Map::<String, Entry>::deserialize(deserializer)?;
+    let lower: HashMap<String, Entry> = map
         .into_iter()
         .map(|(k, v)| (k.to_lowercase(), json_value_lowercase_keys(v)))
         .collect();
-    T::deserialize(Value::Object(lower)).map_err(serde::de::Error::custom)
+    T::deserialize(Entry::Table(lower.into())).map_err(serde::de::Error::custom)
 }
 
-fn json_value_lowercase_keys(v: serde_json::Value) -> serde_json::Value {
+fn json_value_lowercase_keys(v: vdf_reader::entry::Entry) -> vdf_reader::entry::Entry {
+    use vdf_reader::entry::Entry;
     match v {
-        serde_json::Value::Object(map) => serde_json::Value::Object(
+        Entry::Table(map) => Entry::Table(
             map.into_iter()
                 .map(|(k, v)| (k.to_lowercase(), json_value_lowercase_keys(v)))
-                .collect(),
+                .collect::<HashMap<String, Entry>>()
+                .into(),
         ),
         _ => v,
     }
