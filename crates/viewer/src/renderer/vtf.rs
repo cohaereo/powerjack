@@ -61,6 +61,32 @@ pub fn load_vtf_data<R: Read + Seek>(
     c.seek(SeekFrom::Start(offset as u64))?;
     c.read_exact(&mut data)?;
 
+    let (data, fmt) = match fmt {
+        VtfTextureFormat::Abgr8888 => {
+            // Swizzle abgr => rgba
+            let mut swizzled = vec![0; data.len()];
+            for (i, chunk) in data.chunks_exact_mut(4).enumerate() {
+                swizzled[i * 4] = chunk[3];
+                swizzled[i * 4 + 1] = chunk[2];
+                swizzled[i * 4 + 2] = chunk[1];
+                swizzled[i * 4 + 3] = chunk[0];
+            }
+            (swizzled, VtfTextureFormat::Rgba8888)
+        }
+        VtfTextureFormat::Bgr888 => {
+            // Swizzle bgr => rgba
+            let mut swizzled = vec![0; (data.len() / 3) * 4];
+            for (i, chunk) in data.chunks_exact_mut(3).enumerate() {
+                swizzled[i * 4] = chunk[2];
+                swizzled[i * 4 + 1] = chunk[1];
+                swizzled[i * 4 + 2] = chunk[0];
+                swizzled[i * 4 + 3] = 255;
+            }
+            (swizzled, VtfTextureFormat::Rgba8888)
+        }
+        other => (data, other),
+    };
+
     Ok((
         data,
         vtf_texture_format_to_wgpu(fmt)

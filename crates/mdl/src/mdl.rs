@@ -7,8 +7,6 @@ use binrw::file_ptr::FilePtrArgs;
 use std::io::SeekFrom;
 use std::io::{Read, Seek};
 
-use crate::mdl;
-
 #[binread]
 #[br(magic = b"IDST")]
 #[derive(Debug, Clone)]

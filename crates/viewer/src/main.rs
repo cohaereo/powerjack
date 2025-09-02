@@ -128,7 +128,6 @@ fn main() -> anyhow::Result<()> {
     let mut static_props = vec![];
     if let Some(bsp) = &bsp {
         for mdl_path in &bsp.data.static_prop_models {
-            info!("Loading model {mdl_path}");
             match MdlRenderer::load(&renderer.fs, &renderer.iad, mdl_path) {
                 Ok(m) => static_models.push(Some(m)),
                 Err(e) => {
