@@ -9,20 +9,28 @@ struct PushConstants {
 }
 var<push_constant> pc: PushConstants;
 
+fn mat4_to_mat3(mat: mat4x4<f32>) -> mat3x3<f32> {
+    return mat3x3<f32>(
+        mat[0].xyz,
+        mat[1].xyz,
+        mat[2].xyz
+    );
+}
+
 @vertex
 fn vs_main(
     @location(0) position: vec3<f32>,
     @location(1) normal: vec3<f32>,
 ) -> VertexOutput {
     var result: VertexOutput;
-    result.normal = normal;
+    result.normal = mat4_to_mat3(pc.model) * normal;
     result.position = pc.view * pc.model * vec4<f32>(position, 1.0);
     return result;
 }
 
 @fragment
 fn fs_main(vertex: VertexOutput) -> @location(0) vec4<f32> {
-    let light_dir = normalize(vec3<f32>(-1.0, -1.0, -1.0));
-    let diffuse = max(dot(vertex.normal, light_dir), 0.0);
+    let light_dir = normalize(vec3<f32>(0.5, -0.5, -1.0));
+    let diffuse = max(dot(vertex.normal * 0.5 + 0.5, -light_dir), 0.02);
     return vec4<f32>(diffuse, diffuse, diffuse, 1.0);
 }

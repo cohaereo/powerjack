@@ -165,15 +165,23 @@ impl Bsp {
 
         if let Some(sprp) = game_lumps.iter().find(|l| l.id == 0x73707270) {
             let data = file.read_lump_raw_offset(sprp.fileofs as u64, sprp.filelen as usize)?;
-            let mut c = Cursor::new(data);
+            let mut c = Cursor::new(&data);
             static_prop_models = c.read_le::<StaticPropDictLump>()?.names;
             static_prop_leafs = c.read_le::<StaticPropLeafLump>()?.leaf;
             let prop_count: u32 = c.read_le()?;
-            static_props = c.read_le_args::<Vec<StaticPropLump>>(
-                binrw::VecArgs::builder()
-                    .count(prop_count as usize)
-                    .finalize(),
-            )?;
+            let remaining_bytes = data.len() - c.position() as usize;
+            let sprop_size = remaining_bytes / prop_count as usize;
+            let start_pos = c.position();
+            for i in 0..prop_count {
+                c.seek(SeekFrom::Start(start_pos + i as u64 * sprop_size as u64))?;
+                static_props.push(c.read_le()?);
+            }
+            // static_props = c.read_le_args::<Vec<StaticPropLump>>(
+            //     binrw::VecArgs::builder()
+            //         .count(prop_count as usize)
+            //         .inner((sprp.version,))
+            //         .finalize(),
+            // )?;
         }
 
         Ok(Self {

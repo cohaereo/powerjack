@@ -41,7 +41,7 @@ impl ReloadablePipeline {
         if self.cached_pipeline.is_some() && !self.shader.is_changed() {
             self.cached_pipeline.as_ref().cloned().unwrap()
         } else {
-            info!("Compiling pipeline {:?}", self.shader.name());
+            // info!("Compiling pipeline {:?}", self.shader.name());
             self.shader.set_changed(false);
             let shader = device.create_shader_module(wgpu::ShaderModuleDescriptor {
                 label: self.shader.name(),

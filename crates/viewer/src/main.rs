@@ -3,7 +3,7 @@ use std::{fs::File, io::BufReader, path::PathBuf, rc::Rc, sync::Arc, time::Insta
 use anyhow::Context as _;
 use clap::Parser;
 use game_detector::InstalledGame;
-use glam::{Mat4, Quat};
+use glam::{Mat4, Quat, Vec3};
 use image::EncodableLayout;
 use parking_lot::Mutex;
 use powerjack_vpk::VpkFile;
@@ -133,23 +133,18 @@ fn main() -> anyhow::Result<()> {
 
     let mut static_props = vec![];
     for prop in &bsp.data.static_props {
+        let pitch = Quat::from_axis_angle(Vec3::Y, prop.angles[0].to_radians());
+        let yaw = Quat::from_axis_angle(Vec3::Z, prop.angles[1].to_radians());
+        let roll = Quat::from_axis_angle(Vec3::X, prop.angles[2].to_radians());
         static_props.push((
             prop.model_index as usize,
-            Mat4::from_rotation_translation(
-                Quat::IDENTITY,
-                // Quat::from_euler(
-                //     glam::EulerRot::XYZ,
-                //     prop.angles[0],
-                //     prop.angles[1],
-                //     prop.angles[2],
-                // ),
-                prop.origin.into(),
-            ),
+            Mat4::from_rotation_translation(yaw * pitch * roll, prop.origin.into()),
         ));
     }
 
     info!("Loaded '{}'", args.bsp);
 
+    // panic!();
     let mut event_pump = sdl_context.event_pump()?;
     let mut last_time = Instant::now();
     'running: loop {
@@ -176,10 +171,10 @@ fn main() -> anyhow::Result<()> {
         renderer.camera.update(dt);
         renderer.render(&mut bsp, |renderer, rpass, world_to_projective| {
             for (model_index, transform) in &static_props {
-                if let Some(model) = static_models.get_mut(*model_index)
-                    && let Some(model) = model
-                {
+                if let Some(Some(model)) = static_models.get_mut(*model_index) {
                     model.render(&renderer.iad, rpass, world_to_projective, *transform);
+                } else {
+                    error!("Model {model_index} not found");
                 }
             }
         });

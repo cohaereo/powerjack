@@ -3,18 +3,21 @@ use bitflags::bitflags;
 use std::io::{Read, Seek, SeekFrom};
 
 #[derive(BinRead, Debug, Copy, Clone)]
+#[repr(C, packed)]
 pub struct BodyPartHeader {
     pub num_models: u32,
     pub model_offset: u32,
 }
 
 #[derive(BinRead, Debug, Copy, Clone)]
+#[repr(C, packed)]
 pub struct ModelHeader {
     pub num_lods: u32,
     pub lod_offset: u32,
 }
 
 #[derive(BinRead, Debug, Copy, Clone)]
+#[repr(C, packed)]
 pub struct ModelLodHeader {
     pub num_meshes: u32,
     pub mesh_offset: u32,
@@ -22,6 +25,7 @@ pub struct ModelLodHeader {
 }
 
 #[derive(BinRead, Debug, Copy, Clone)]
+#[repr(C, packed)]
 pub struct MeshHeader {
     pub num_stripgroups: u32,
     pub stripgroup_header_offset: u32,
@@ -29,6 +33,7 @@ pub struct MeshHeader {
 }
 
 #[derive(BinRead, Debug, Copy, Clone)]
+#[repr(C, packed)]
 pub struct StripGroupHeader {
     pub num_verts: i32,
     pub vert_offset: i32,
@@ -37,11 +42,10 @@ pub struct StripGroupHeader {
     pub num_strips: i32,
     pub strip_offset: i32,
     pub flags: u8,
-    pub num_topology_indices: i32,
-    pub topology_offset: i32,
 }
 
 #[derive(BinRead, Debug, Copy, Clone)]
+#[repr(C, packed)]
 pub struct StripHeader {
     pub num_indices: i32,
     pub index_offset: i32,
@@ -51,11 +55,10 @@ pub struct StripHeader {
     pub flags: StripFlags,
     pub num_bone_state_changes: i32,
     pub bone_state_change_offset: i32,
-    pub num_topology_indices: i32,
-    pub topology_offset: i32,
 }
 
 #[derive(BinRead, Debug, Copy, Clone)]
+#[repr(C, packed)]
 pub struct VtxVertex {
     pub bone_weight_index: [u8; 3],
     pub num_bones: u8,
@@ -86,9 +89,9 @@ impl BinRead for StripFlags {
 }
 
 pub type BodyPartList = Vec<ModelList>;
-pub type ModelList = Vec<LodList>;
-pub type LodList = Vec<MeshList>;
-pub type MeshList = Vec<StripGroupList>;
+pub type ModelList = Vec<(ModelHeader, LodList)>;
+pub type LodList = Vec<(ModelLodHeader, MeshList)>;
+pub type MeshList = Vec<(MeshHeader, StripGroupList)>;
 pub type StripGroupList = Vec<StripGroup>;
 
 pub struct StripGroup {
@@ -207,21 +210,21 @@ impl VtxData {
                             ))?;
                         }
 
-                        meshes.push(stripgroups);
+                        meshes.push((mesh, stripgroups));
 
                         input.seek(SeekFrom::Start(
                             save_pos + std::mem::size_of::<MeshHeader>() as u64,
                         ))?;
                     }
 
-                    lods.push(meshes);
+                    lods.push((lod, meshes));
 
                     input.seek(SeekFrom::Start(
                         save_pos + std::mem::size_of::<ModelLodHeader>() as u64,
                     ))?;
                 }
 
-                models.push(lods);
+                models.push((model, lods));
 
                 input.seek(SeekFrom::Start(
                     save_pos + std::mem::size_of::<ModelHeader>() as u64,

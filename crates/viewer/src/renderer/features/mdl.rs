@@ -1,9 +1,12 @@
-use std::{io::Cursor, path::Path};
+use std::{io::Cursor, ops::Range, path::Path};
 
 use anyhow::Context;
 use bytemuck::{Pod, Zeroable};
 use glam::{Mat4, Vec3};
-use powerjack_mdl::{vtx::VtxData, vvd::VvdData};
+use powerjack_mdl::{
+    vtx::{StripFlags, VtxData},
+    vvd::VvdData,
+};
 use wgpu::util::DeviceExt;
 
 use crate::{
@@ -16,9 +19,7 @@ use crate::{
 
 pub struct MdlRenderer {
     pipeline: ReloadablePipeline,
-    vertex_buffer: wgpu::Buffer,
-    // index_buffer: wgpu::Buffer,
-    vertex_count: u32,
+    buffers: Vec<(wgpu::Buffer, wgpu::Buffer, Range<u32>)>,
 }
 
 impl MdlRenderer {
@@ -47,30 +48,73 @@ impl MdlRenderer {
             VtxData::parse(&mut Cursor::new(vtx_data))?
         };
 
-        let mut vertices = vec![];
+        let mut buffers = vec![];
         for body_part in &vtx.body_parts {
-            for model in body_part {
-                let lod = &model[0];
-                for mesh in lod {
-                    for strip_group in mesh {
-                        for vertex in &strip_group.vertices {
-                            let orig_vertex = &vvd.vertices[vertex.orig_mesh_vert_id as usize];
-                            vertices.push(MdlVertex {
-                                position: orig_vertex.position.into(),
-                                normal: orig_vertex.normal.into(),
-                            });
+            for (_model, lods) in body_part {
+                let (_lod, meshes) = &lods[0];
+                for (_mesh, strip_groups) in meshes {
+                    for strip_group in strip_groups {
+                        // for vertex in &strip_group.vertices {
+                        //     let orig_vertex = &vvd.vertices[vertex.orig_mesh_vert_id as usize];
+                        //     vertices.push(MdlVertex {
+                        //         position: orig_vertex.position.into(),
+                        //         normal: orig_vertex.normal.into(),
+                        //     });
+                        // }
+
+                        let mut vertices = vec![];
+                        // let mut indices: Vec<u16> = vec![];
+                        for strip in &strip_group.strips {
+                            if !strip.flags.contains(StripFlags::IS_TRILIST) {
+                                continue;
+                            }
+
+                            for i in (0..strip.num_indices).step_by(3) {
+                                let idxs = [
+                                    strip_group.indices[strip.index_offset as usize + i as usize],
+                                    strip_group.indices
+                                        [strip.index_offset as usize + i as usize + 1],
+                                    strip_group.indices
+                                        [strip.index_offset as usize + i as usize + 2],
+                                ];
+
+                                let verts = [
+                                    strip_group.vertices[idxs[0] as usize],
+                                    strip_group.vertices[idxs[1] as usize],
+                                    strip_group.vertices[idxs[2] as usize],
+                                ];
+
+                                for vertex in &verts {
+                                    let orig_vertex =
+                                        &vvd.vertices[vertex.orig_mesh_vert_id as usize];
+                                    vertices.push(MdlVertex {
+                                        position: orig_vertex.position.into(),
+                                        normal: orig_vertex.normal.into(),
+                                    });
+                                }
+                            }
                         }
+
+                        let vertex_buffer =
+                            iad.create_buffer_init(&wgpu::util::BufferInitDescriptor {
+                                label: None,
+                                contents: bytemuck::cast_slice(&vertices),
+                                usage: wgpu::BufferUsages::VERTEX,
+                            });
+
+                        let index_buffer =
+                            iad.create_buffer_init(&wgpu::util::BufferInitDescriptor {
+                                label: None,
+                                contents: bytemuck::cast_slice(&strip_group.indices),
+                                usage: wgpu::BufferUsages::INDEX,
+                            });
+
+                        let range = 0..vertices.len() as u32;
+                        buffers.push((vertex_buffer, index_buffer, range))
                     }
                 }
             }
         }
-        let vertex_count = vertices.len() as u32;
-
-        let vertex_buffer = iad.create_buffer_init(&wgpu::util::BufferInitDescriptor {
-            label: None,
-            contents: bytemuck::cast_slice(&vertices),
-            usage: wgpu::BufferUsages::VERTEX,
-        });
 
         let pipeline_layout = iad.create_pipeline_layout(&wgpu::PipelineLayoutDescriptor {
             label: None,
@@ -95,10 +139,10 @@ impl MdlRenderer {
                         buffers: std::slice::from_ref(&MdlVertex::LAYOUT),
                     },
                     primitive: wgpu::PrimitiveState {
-                        topology: wgpu::PrimitiveTopology::PointList,
-                        // topology: wgpu::PrimitiveTopology::TriangleList,
+                        // topology: wgpu::PrimitiveTopology::PointList,
+                        topology: wgpu::PrimitiveTopology::TriangleList,
                         strip_index_format: None,
-                        front_face: wgpu::FrontFace::Ccw,
+                        front_face: wgpu::FrontFace::Cw,
                         cull_mode: Some(wgpu::Face::Back),
                         unclipped_depth: false,
                         polygon_mode: wgpu::PolygonMode::Fill,
@@ -128,11 +172,7 @@ impl MdlRenderer {
             }),
         );
 
-        Ok(Self {
-            pipeline,
-            vertex_buffer,
-            vertex_count,
-        })
+        Ok(Self { pipeline, buffers })
     }
 
     pub fn render(
@@ -150,13 +190,14 @@ impl MdlRenderer {
             0,
             bytemuck::cast_slice(&[camera, model]),
         );
-        pass.set_vertex_buffer(0, self.vertex_buffer.slice(..));
-        // pass.set_index_buffer(self.index_buffer.slice(..), wgpu::IndexFormat::Uint32);
 
-        pass.draw_indexed(0..self.vertex_count, 0, 0..1);
-        // for (draw_range, _face) in &self.faces {
-        //     pass.draw_indexed(draw_range.clone(), 0, 0..1);
-        // }
+        for (vb, _ib, range) in &self.buffers {
+            pass.set_vertex_buffer(0, vb.slice(..));
+            // pass.set_index_buffer(ib.slice(..), wgpu::IndexFormat::Uint16);
+
+            // pass.draw_indexed(strip.clone(), 0, 0..1);
+            pass.draw(range.clone(), 0..1);
+        }
     }
 }
 
