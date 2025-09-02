@@ -1,12 +1,10 @@
 use std::{io::Cursor, ops::Range, path::Path};
 
 use anyhow::Context;
-use binrw::BinReaderExt;
 use bytemuck::{Pod, Zeroable};
-use chroma_dbg::ChromaDebug;
 use glam::{Mat4, Vec2, Vec3};
 use powerjack_mdl::{
-    mdl::{MdlData, StudioHeader},
+    mdl::MdlData,
     vtx::{StripFlags, VtxData},
     vvd::VvdData,
 };
@@ -17,12 +15,15 @@ use crate::{
     renderer::{
         iad::InstanceAdapterDevice,
         reloadable_pipeline::{ReloadablePipeline, ShaderSource},
+        vmt::get_basetexture_for_vmt,
+        vtf::{create_fallback_texture, load_vtf},
     },
 };
 
 pub struct MdlRenderer {
     pipeline: ReloadablePipeline,
-    buffers: Vec<(wgpu::Buffer, wgpu::Buffer, Range<u32>)>,
+    buffers: Vec<(usize, wgpu::Buffer, wgpu::Buffer, Range<u32>)>,
+    materials: Vec<wgpu::BindGroup>,
 }
 
 impl MdlRenderer {
@@ -77,8 +78,8 @@ impl MdlRenderer {
 
                 let (_vtx_lod, vtx_meshes) = &vtx_lods[0];
                 for (mesh, (_vtx_mesh, strip_groups)) in meshes.iter().zip(vtx_meshes.iter()) {
+                    let mut vertices = vec![];
                     for strip_group in strip_groups {
-                        let mut vertices = vec![];
                         // let mut indices: Vec<u16> = vec![];
                         for strip in &strip_group.strips {
                             if !strip.flags.contains(StripFlags::IS_TRILIST) {
@@ -112,33 +113,54 @@ impl MdlRenderer {
                                 }
                             }
                         }
-
-                        let vertex_buffer =
-                            iad.create_buffer_init(&wgpu::util::BufferInitDescriptor {
-                                label: None,
-                                contents: bytemuck::cast_slice(&vertices),
-                                usage: wgpu::BufferUsages::VERTEX,
-                            });
-
-                        let index_buffer =
-                            iad.create_buffer_init(&wgpu::util::BufferInitDescriptor {
-                                label: None,
-                                contents: bytemuck::cast_slice(&strip_group.indices),
-                                usage: wgpu::BufferUsages::INDEX,
-                            });
-
-                        let range = 0..vertices.len() as u32;
-                        buffers.push((vertex_buffer, index_buffer, range))
                     }
+
+                    let vertex_buffer = iad.create_buffer_init(&wgpu::util::BufferInitDescriptor {
+                        label: None,
+                        contents: bytemuck::cast_slice(&vertices),
+                        usage: wgpu::BufferUsages::VERTEX,
+                    });
+
+                    let index_buffer = iad.create_buffer_init(&wgpu::util::BufferInitDescriptor {
+                        label: None,
+                        contents: bytemuck::cast_slice(&[0u16]),
+                        usage: wgpu::BufferUsages::INDEX,
+                    });
+
+                    let range = 0..vertices.len() as u32;
+                    buffers.push((mesh.material as usize, vertex_buffer, index_buffer, range))
                 }
 
                 accum_index += model.num_vertices as usize;
             }
         }
 
+        let texture_bindgroup_layout =
+            iad.create_bind_group_layout(&wgpu::BindGroupLayoutDescriptor {
+                label: None,
+                entries: &[
+                    wgpu::BindGroupLayoutEntry {
+                        binding: 0,
+                        visibility: wgpu::ShaderStages::FRAGMENT,
+                        ty: wgpu::BindingType::Texture {
+                            sample_type: wgpu::TextureSampleType::Float { filterable: true },
+                            view_dimension: wgpu::TextureViewDimension::D2,
+                            multisampled: false,
+                        },
+                        count: None,
+                    },
+                    wgpu::BindGroupLayoutEntry {
+                        binding: 1,
+                        visibility: wgpu::ShaderStages::FRAGMENT,
+                        ty: wgpu::BindingType::Sampler(wgpu::SamplerBindingType::Filtering),
+                        count: None,
+                    },
+                ],
+            });
+
         let pipeline_layout = iad.create_pipeline_layout(&wgpu::PipelineLayoutDescriptor {
             label: None,
-            bind_group_layouts: &[],
+            bind_group_layouts: &[&texture_bindgroup_layout],
             push_constant_ranges: &[wgpu::PushConstantRange {
                 range: 0..128,
                 stages: wgpu::ShaderStages::VERTEX,
@@ -191,7 +213,75 @@ impl MdlRenderer {
             }),
         );
 
-        Ok(Self { pipeline, buffers })
+        let sampler = iad.create_sampler(&wgpu::SamplerDescriptor {
+            address_mode_u: wgpu::AddressMode::Repeat,
+            address_mode_v: wgpu::AddressMode::Repeat,
+            address_mode_w: wgpu::AddressMode::Repeat,
+            mag_filter: wgpu::FilterMode::Linear,
+            min_filter: wgpu::FilterMode::Linear,
+            mipmap_filter: wgpu::FilterMode::Linear,
+            ..Default::default()
+        });
+
+        let mut materials = vec![];
+        for t in &mdl.textures {
+            let mut texture = create_fallback_texture(iad, [255, 0, 255]).1;
+            let mut found = false;
+            // Try every texture dir until we find the material
+            'next_dir: for dir in &mdl.texture_dirs {
+                let path = format!("materials/{dir}/{}.vmt", t.name);
+                println!("Testing path {path}");
+                texture = match get_basetexture_for_vmt(fs, &path) {
+                    Ok(Some(basetexture)) => {
+                        found = true;
+                        let path = format!("materials/{basetexture}.vtf");
+                        match load_vtf(fs, iad, &path) {
+                            Ok(o) => o,
+                            Err(e) => {
+                                error!("Failed to load texture {path}: {e}");
+                                create_fallback_texture(iad, [255, 0, 255])
+                            }
+                        }
+                    }
+                    Ok(None) => continue 'next_dir,
+                    Err(e) => {
+                        found = true;
+                        error!("Failed to load VMT {path}: {e}");
+                        create_fallback_texture(iad, [255, 0, 255])
+                    }
+                }
+                .1;
+
+                break;
+            }
+
+            if !found {
+                error!("Couldn't find material {}", t.name);
+            }
+
+            let texture_bindgroup = iad.create_bind_group(&wgpu::BindGroupDescriptor {
+                label: None,
+                layout: &texture_bindgroup_layout,
+                entries: &[
+                    wgpu::BindGroupEntry {
+                        binding: 0,
+                        resource: wgpu::BindingResource::TextureView(&texture),
+                    },
+                    wgpu::BindGroupEntry {
+                        binding: 1,
+                        resource: wgpu::BindingResource::Sampler(&sampler),
+                    },
+                ],
+            });
+
+            materials.push(texture_bindgroup);
+        }
+
+        Ok(Self {
+            pipeline,
+            buffers,
+            materials,
+        })
     }
 
     pub fn render(
@@ -210,7 +300,8 @@ impl MdlRenderer {
             bytemuck::cast_slice(&[camera, model]),
         );
 
-        for (vb, _ib, range) in &self.buffers {
+        for (material, vb, _ib, range) in &self.buffers {
+            pass.set_bind_group(0, &self.materials[*material], &[]);
             pass.set_vertex_buffer(0, vb.slice(..));
             // pass.set_index_buffer(ib.slice(..), wgpu::IndexFormat::Uint16);
 

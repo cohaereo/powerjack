@@ -149,11 +149,12 @@ fn main() -> anyhow::Result<()> {
     }
 
     if let Some(mdl_path) = &args.mdl {
-        if let Ok(mdl) = MdlRenderer::load(&renderer.fs, &renderer.iad, mdl_path) {
-            static_models.push(Some(mdl));
-        } else {
-            error!("Failed to load model {mdl_path}");
-            static_models.push(None);
+        match MdlRenderer::load(&renderer.fs, &renderer.iad, mdl_path) {
+            Ok(mdl) => static_models.push(Some(mdl)),
+            Err(e) => {
+                error!("Failed to load model {mdl_path}: {e}");
+                static_models.push(None);
+            }
         }
 
         static_props.push((
@@ -195,8 +196,8 @@ fn main() -> anyhow::Result<()> {
             for (model_index, transform) in &static_props {
                 if let Some(Some(model)) = static_models.get_mut(*model_index) {
                     model.render(&renderer.iad, rpass, world_to_projective, *transform);
-                } else {
-                    error!("Model {model_index} not found");
+                    // } else {
+                    //     error!("Model {model_index} not found");
                 }
             }
         });

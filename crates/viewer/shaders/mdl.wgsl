@@ -31,11 +31,21 @@ fn vs_main(
     return result;
 }
 
+@group(0)
+@binding(0)
+var r_texture: texture_2d<f32>;
+
+@group(0)
+@binding(1)
+var r_sampler_linear: sampler;
+
 @fragment
 fn fs_main(vertex: VertexOutput) -> @location(0) vec4<f32> {
     let light_dir = normalize(vec3<f32>(0.5, -0.5, -1.0));
     let diffuse = max(dot(vertex.normal * 0.5 + 0.5, -light_dir), 0.02);
 
+    let sample = textureSample(r_texture, r_sampler_linear, vertex.uv);
+
     // return vec4<f32>(fract(vertex.uv.x) * diffuse, fract(vertex.uv.y) * diffuse, 0.0, 1.0);
-    return vec4<f32>(diffuse, diffuse, diffuse, 1.0);
+    return vec4<f32>(sample.xyz * diffuse, 1.0);
 }

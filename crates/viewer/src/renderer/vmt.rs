@@ -14,7 +14,11 @@ pub fn get_basetexture_for_vmt(
     let data_str = String::from_utf8_lossy(&data);
     let vdf = Vdf::parse(&data_str)?;
     match vdf.key.as_ref().to_lowercase().as_str() {
-        "lightmappedgeneric" | "patch" | "unlitgeneric" | "worldvertextransition" => {}
+        "lightmappedgeneric"
+        | "patch"
+        | "unlitgeneric"
+        | "vertexlitgeneric"
+        | "worldvertextransition" => {}
         u => anyhow::bail!("Unsupported material type '{u}'"),
     }
 

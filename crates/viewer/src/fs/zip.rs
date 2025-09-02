@@ -5,7 +5,11 @@ use zip_lzma::result::ZipError;
 
 impl<R: Read + Seek + Send + Sync> Mountable for zip_lzma::read::ZipArchive<R> {
     fn read_path(&mut self, path: &str) -> anyhow::Result<Option<Vec<u8>>> {
-        let path = path.to_lowercase().replace("\\", "/");
+        let mut path = path.to_lowercase().replace("\\", "/");
+        // Eliminate double path separators
+        while path.contains("//") {
+            path = path.replace("//", "/");
+        }
         let path = Path::new(&path);
 
         let mut file = match self.by_name(&path.to_string_lossy()) {
@@ -14,7 +18,7 @@ impl<R: Read + Seek + Send + Sync> Mountable for zip_lzma::read::ZipArchive<R> {
                 return match e {
                     ZipError::FileNotFound => Ok(None),
                     _ => Err(e.into()),
-                }
+                };
             }
         };
 

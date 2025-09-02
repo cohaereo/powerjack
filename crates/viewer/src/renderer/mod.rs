@@ -7,10 +7,7 @@ use wgpu::{
     rwh::{HasDisplayHandle, HasWindowHandle},
 };
 
-use crate::{
-    fs::SharedFilesystem,
-    renderer::{features::bsp::BspStaticRenderer, iad::InstanceAdapterDevice},
-};
+use crate::{fs::SharedFilesystem, renderer::iad::InstanceAdapterDevice};
 
 pub mod camera;
 pub mod features;

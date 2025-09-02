@@ -1,8 +1,13 @@
 use binrw::BinReaderExt;
+use binrw::FilePtr32;
+use binrw::NullString;
+use binrw::PosValue;
 use binrw::binread;
+use binrw::file_ptr::FilePtrArgs;
 use std::io::SeekFrom;
 use std::io::{Read, Seek};
-use std::usize::MAX;
+
+use crate::mdl;
 
 #[binread]
 #[br(magic = b"IDST")]
@@ -112,12 +117,34 @@ pub struct StudioMesh {
     #[br(temp)]
     _unused: [u32; 8 + 1 + MAX_NUM_LODS],
 }
+#[binread]
+#[derive(Debug, Clone)]
+pub struct StudioTexture {
+    #[br(temp)]
+    base: PosValue<()>,
+
+    #[br(temp, offset = base.pos)]
+    raw_name: FilePtr32<NullString>,
+
+    #[br(calc(raw_name.to_string()))]
+    pub name: String,
+
+    pub flags: u32,
+    pub used: u32,
+    #[br(temp)]
+    _unused1: u32,
+
+    #[br(temp)]
+    _unused: [u32; 10 + 2],
+}
 
 #[derive(Debug, Clone)]
 pub struct MdlData {
     pub header: StudioHeader,
 
     pub body_parts: Vec<(StudioBodyPart, Vec<(StudioModel, Vec<StudioMesh>)>)>,
+    pub textures: Vec<StudioTexture>,
+    pub texture_dirs: Vec<String>,
 }
 
 impl MdlData {
@@ -127,6 +154,8 @@ impl MdlData {
         let mut mdl_data = Self {
             header: header.clone(),
             body_parts: Vec::new(),
+            textures: Vec::new(),
+            texture_dirs: Vec::new(),
         };
 
         // Body parts
@@ -160,6 +189,19 @@ impl MdlData {
 
             mdl_data.body_parts.push((body_part, models));
             input.seek(SeekFrom::Start(save_pos))?;
+        }
+
+        input.seek(SeekFrom::Start(header.texture_offset as u64))?;
+        for _ in 0..header.num_textures {
+            mdl_data.textures.push(input.read_le()?);
+        }
+
+        input.seek(SeekFrom::Start(header.texture_dir_offset as u64))?;
+        for _ in 0..header.num_texture_dirs {
+            let n = input.read_le_args::<FilePtr32<NullString>>(
+                FilePtrArgs::builder().offset(0).finalize(),
+            )?;
+            mdl_data.texture_dirs.push(n.to_string());
         }
 
         Ok(mdl_data)

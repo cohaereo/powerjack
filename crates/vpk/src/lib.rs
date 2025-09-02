@@ -92,7 +92,12 @@ impl<R: Read + Seek> VpkFile<R> {
         &mut self,
         path: impl AsRef<str>,
     ) -> anyhow::Result<Option<Vec<u8>>> {
-        let path = path.as_ref().replace("\\", "/");
+        let mut path = path.as_ref().replace("\\", "/");
+        // Eliminate double path separators
+        while path.contains("//") {
+            path = path.replace("//", "/");
+        }
+
         let path = Path::new(&path);
         let extension = path
             .extension()
