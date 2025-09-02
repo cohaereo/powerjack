@@ -229,11 +229,11 @@ impl MdlRenderer {
             let mut found = false;
             // Try every texture dir until we find the material
             'next_dir: for dir in &mdl.texture_dirs {
-                let path = format!("materials/{dir}/{}.vmt", t.name);
+                let path = format!("materials/{dir}/{}", t.name);
                 texture = match get_basetexture_for_vmt(fs, &path) {
                     Ok(Some(basetexture)) => {
                         found = true;
-                        let path = format!("materials/{basetexture}.vtf");
+                        let path = format!("materials/{basetexture}");
                         match load_vtf(fs, iad, &path) {
                             Ok(o) => o,
                             Err(e) => {

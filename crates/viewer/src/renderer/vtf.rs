@@ -4,16 +4,19 @@ use powerjack_vtf::{VtfHeader, VtfTextureFormat};
 use std::io::{Cursor, Read, Seek, SeekFrom};
 use wgpu::util::DeviceExt;
 
-use crate::{fs::SharedFilesystem, renderer::iad::InstanceAdapterDevice};
+use crate::{
+    fs::SharedFilesystem, renderer::iad::InstanceAdapterDevice, util::ensure_path_has_extension,
+};
 
 pub fn load_vtf(
     fs: &SharedFilesystem,
     iad: &InstanceAdapterDevice,
     path: &str,
 ) -> anyhow::Result<(wgpu::Texture, wgpu::TextureView)> {
+    let path = ensure_path_has_extension(path, "vtf");
     let Some(vtf_data) = fs
         .lock()
-        .read_path(path)
+        .read_path(&path)
         .context("Failed to read VTF texture data")?
     else {
         anyhow::bail!("VTF file does not exist");
@@ -25,7 +28,7 @@ pub fn load_vtf(
     let texture = iad.create_texture_with_data(
         &iad.queue,
         &wgpu::TextureDescriptor {
-            label: Some(path),
+            label: Some(&path),
             size: wgpu::Extent3d {
                 width,
                 height,

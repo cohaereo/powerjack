@@ -19,6 +19,7 @@ use crate::{
 pub mod args;
 pub mod fs;
 pub mod renderer;
+pub mod util;
 
 #[macro_use]
 extern crate tracing;

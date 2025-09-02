@@ -45,10 +45,10 @@ impl BspStaticRenderer {
         let mut textures = Vec::new();
         for td in &bsp.tex_data {
             let name = &bsp.texdata_string_table[td.name_index as usize];
-            let path = format!("MATERIALS/{name}.VMT");
+            let path = format!("MATERIALS/{name}");
             let (texture, view) = match get_basetexture_for_vmt(&renderer.fs, &path) {
                 Ok(Some(basetexture)) => {
-                    let path = format!("MATERIALS/{basetexture}.VTF");
+                    let path = format!("MATERIALS/{basetexture}");
                     match load_vtf(&renderer.fs, iad, &path) {
                         Ok(o) => o,
                         Err(e) => {

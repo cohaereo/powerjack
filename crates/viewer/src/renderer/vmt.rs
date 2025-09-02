@@ -2,13 +2,14 @@ use std::collections::HashMap;
 
 use serde::{Deserialize, Deserializer, de::DeserializeOwned};
 
-use crate::fs::SharedFilesystem;
+use crate::{fs::SharedFilesystem, util::ensure_path_has_extension};
 
 pub fn get_basetexture_for_vmt(
     fs: &SharedFilesystem,
     path: &str,
 ) -> anyhow::Result<Option<String>> {
-    let data = fs.lock().read_path(path)?;
+    let path = ensure_path_has_extension(path, "vmt");
+    let data = fs.lock().read_path(&path)?;
     let Some(data) = data else {
         return Ok(None);
     };
