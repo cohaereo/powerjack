@@ -2,6 +2,7 @@ use bitflags::bitflags;
 use glam::{Mat4, Vec3};
 use sdl3::keyboard::Keycode;
 
+#[derive(Clone)]
 pub struct Camera {
     pub position: Vec3,
 

@@ -1,7 +1,7 @@
 use std::sync::Arc;
 
 use anyhow::Context;
-use glam::Mat4;
+use glam::{Mat4, Vec3};
 use wgpu::{
     RenderPass,
     rwh::{HasDisplayHandle, HasWindowHandle},
@@ -24,6 +24,8 @@ pub struct Renderer<'a> {
 
     depth: wgpu::Texture,
     depth_view: wgpu::TextureView,
+    pub sky_camera_pos: Vec3,
+    pub sky_camera_scale: f32,
 
     pub camera: camera::Camera,
 }
@@ -71,6 +73,8 @@ impl<'a> Renderer<'a> {
             surface_config,
             depth,
             depth_view,
+            sky_camera_pos: Vec3::new(4432.0, -8916.0, -1178.28),
+            sky_camera_scale: 16.0,
             fs: Arc::clone(fs),
             camera: camera::Camera::default(),
         })
@@ -101,9 +105,9 @@ impl<'a> Renderer<'a> {
             .create_view(&wgpu::TextureViewDescriptor::default());
     }
 
-    pub fn render<F>(&mut self, render: F)
+    pub fn render<F>(&mut self, mut render: F)
     where
-        F: FnOnce(&mut Self, &mut RenderPass, Mat4),
+        F: FnMut(&mut Self, &mut RenderPass, Mat4),
     {
         let Ok(frame) = self.surface.get_current_texture() else {
             return;
@@ -119,6 +123,7 @@ impl<'a> Renderer<'a> {
                 label: Some("Render Encoder"),
             });
 
+        // Skybox pass
         {
             let mut rpass = encoder.begin_render_pass(&wgpu::RenderPassDescriptor {
                 color_attachments: &[Some(wgpu::RenderPassColorAttachment {
@@ -126,7 +131,45 @@ impl<'a> Renderer<'a> {
                     depth_slice: None,
                     resolve_target: None,
                     ops: wgpu::Operations {
-                        load: wgpu::LoadOp::Clear(wgpu::Color::BLACK),
+                        // load: wgpu::LoadOp::Clear(wgpu::Color::BLACK),
+                        load: wgpu::LoadOp::Clear(wgpu::Color {
+                            r: 0.6,
+                            g: 0.78,
+                            b: 0.99,
+                            a: 1.0,
+                        }),
+                        store: wgpu::StoreOp::Store,
+                    },
+                })],
+                depth_stencil_attachment: Some(wgpu::RenderPassDepthStencilAttachment {
+                    view: &self.depth_view,
+                    depth_ops: Some(wgpu::Operations {
+                        load: wgpu::LoadOp::Clear(0.0),
+                        store: wgpu::StoreOp::Store,
+                    }),
+                    stencil_ops: None,
+                }),
+                ..Default::default()
+            });
+
+            let size = frame.texture.size();
+            let mut sky_camera = self.camera.clone();
+            sky_camera.position /= self.sky_camera_scale;
+            sky_camera.position += self.sky_camera_pos;
+            let world_to_projective =
+                sky_camera.world_to_projective(size.width as f32 / size.height as f32);
+            render(self, &mut rpass, world_to_projective);
+        }
+
+        // Main pass
+        {
+            let mut rpass = encoder.begin_render_pass(&wgpu::RenderPassDescriptor {
+                color_attachments: &[Some(wgpu::RenderPassColorAttachment {
+                    view: &view,
+                    depth_slice: None,
+                    resolve_target: None,
+                    ops: wgpu::Operations {
+                        load: wgpu::LoadOp::Load,
                         store: wgpu::StoreOp::Store,
                     },
                 })],

@@ -6,9 +6,12 @@ use std::{
 };
 
 use anyhow::Context;
+use bitflags::bitflags;
 use bytemuck::{Pod, Zeroable};
+use chroma_dbg::ChromaDebug;
 use glam::{IVec2, Mat4, Vec2, Vec3, Vec4};
 use powerjack_bsp::{Bsp, BspFile, lumps::BspFace};
+use serde::Deserialize;
 use wgpu::util::DeviceExt;
 
 use crate::renderer::{
@@ -31,6 +34,7 @@ pub struct BspStaticRenderer {
 
     faces: Vec<(Range<u32>, BspFace)>,
     pipeline: ReloadablePipeline,
+    pub entities: Vec<vdf_reader::entry::Entry>,
 }
 
 impl BspStaticRenderer {
@@ -80,14 +84,25 @@ impl BspStaticRenderer {
         {
             let ti = &bsp.tex_info[f.tex_info as usize];
             let td = &bsp.tex_data[ti.tex_data as usize];
+            let texture = &bsp.texdata_string_table[td.name_index as usize];
 
-            // let mut flags = FaceFlags::empty();
-            // flags.set(FaceFlags::DISPLACEMENT, f.disp_info >= 0);
+            let mut flags = FaceFlags::empty();
+            flags.set(FaceFlags::DISPLACEMENT, f.disp_info >= 0);
+            flags.set(
+                FaceFlags::SKY2D,
+                texture.to_lowercase().ends_with("toolsskybox2d"),
+            );
+            flags.set(
+                FaceFlags::SKY3D,
+                texture.to_lowercase().ends_with("toolsskybox"),
+            );
+            let lightmap_face_size = IVec2::from(f.lightmap_size) + IVec2::ONE;
             gpu_faces.push(GpuMapFace {
-                lightmap_face_size: IVec2::from(f.lightmap_size) + IVec2::ONE,
+                lightmap_face_size_packed: (lightmap_face_size.x as u32 & 0xFFFF) << 16
+                    | (lightmap_face_size.y as u32 & 0xFFFF),
                 lightmap_offset: f.lightmap_data_offset / 4,
+                flags,
                 texture_index: ti.tex_data,
-                // flags,
             });
             let color = Vec3::from([
                 td.reflectivity[0].sqrt(),
@@ -456,6 +471,12 @@ impl BspStaticRenderer {
             }),
         );
 
+        let mut entities = vec![];
+        let mut de = vdf_reader::serde::Deserializer::from_str(&bsp.entities);
+        while let Ok(e) = vdf_reader::entry::Entry::deserialize(&mut de) {
+            entities.push(e);
+        }
+
         Ok(Self {
             data: bsp,
             vertex_buffer,
@@ -465,6 +486,7 @@ impl BspStaticRenderer {
             texture_bindgroup,
             faces,
             pipeline,
+            entities,
         })
     }
 
@@ -541,20 +563,21 @@ impl StaticMapVertex {
 #[derive(Default, Pod, Copy, Clone, Zeroable, Debug)]
 #[repr(C, packed)]
 pub struct GpuMapFace {
-    pub lightmap_face_size: IVec2,
+    pub lightmap_face_size_packed: u32,
     pub lightmap_offset: i32,
-    // pub flags: FaceFlags,
-    // pub flags_and_texture_index: u32,
+    pub flags: FaceFlags,
     pub texture_index: i32,
 }
 
-// bitflags! {
-//     #[derive(Default, Copy, Clone, Debug)]
-//     #[repr(C)]
-//     pub struct FaceFlags: u16 {
-//         const DISPLACEMENT = (1 << 0);
-//     }
-// }
+bitflags! {
+    #[derive(Default, Copy, Clone, Debug)]
+    #[repr(C)]
+    pub struct FaceFlags: u32 {
+        const DISPLACEMENT = (1 << 0);
+        const SKY2D = (1 << 1);
+        const SKY3D = (1 << 2);
+    }
+}
 
-// unsafe impl bytemuck::Zeroable for FaceFlags {}
-// unsafe impl bytemuck::Pod for FaceFlags {}
+unsafe impl bytemuck::Zeroable for FaceFlags {}
+unsafe impl bytemuck::Pod for FaceFlags {}

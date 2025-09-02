@@ -32,9 +32,9 @@ fn vs_main(
 }
 
 struct MapFace {
-    lightmap_size: vec2<u32>,
+    lightmap_size: u32,
     lightmap_offset: i32,
-    // flags: u32,
+    flags: u32,
     texture_index: i32,
 }
 
@@ -74,11 +74,16 @@ fn load_lightmap_texel(offset: u32) -> vec3<f32> {
 }
 
 fn sample_lightmap(texcoord: vec2<f32>, face: MapFace) -> vec3<f32> {
-    let texcoord_scaled = vec2(
-        clamp(texcoord.x, 0.0, f32(face.lightmap_size.x)),
-        clamp(texcoord.y, 0.0, f32(face.lightmap_size.y))
+    let lightmap_size = vec2<u32>(
+        face.lightmap_size >> 16,
+        face.lightmap_size & 0xFFFF
     );
-    let offset = u32(u32(face.lightmap_size.x) * u32(texcoord_scaled.y) + u32(texcoord_scaled.x));
+
+    let texcoord_scaled = vec2(
+        clamp(texcoord.x, 0.0, f32(lightmap_size.x)),
+        clamp(texcoord.y, 0.0, f32(lightmap_size.y))
+    );
+    let offset = u32(u32(lightmap_size.x) * u32(texcoord_scaled.y) + u32(texcoord_scaled.x));
     return load_lightmap_texel(u32(face.lightmap_offset) + offset);
 }
 
@@ -96,9 +101,21 @@ fn sample_lightmap_bilinear(texcoord: vec2<f32>, face: MapFace) -> vec3<f32> {
     return mix(top, bottom, lerp_y);
 }
 
+const FACE_IS_DISPLACEMENT: u32 = 1 << 0;
+const FACE_IS_SKY2D: u32 = 1 << 1;
+const FACE_IS_SKY3D: u32 = 1 << 2;
+const FACE_IS_SKY: u32 = FACE_IS_SKY2D | FACE_IS_SKY3D;
+
 @fragment
 fn fs_main(vertex: VertexOutput) -> @location(0) vec4<f32> {
     let face = r_faces[vertex.face_index];
+    if((face.flags & FACE_IS_SKY3D) != 0) {
+        discard;
+    }
+    if((face.flags & FACE_IS_SKY2D) != 0) {
+        return vec4(0.7f, 0.88f, 0.99f, 1f);
+    }
+
     var light = vec3<f32>(1.0, 1.0, 1.0);
     if (face.lightmap_offset >= 0) {
         light = sample_lightmap_bilinear(vertex.lightmap_texcoord, face);

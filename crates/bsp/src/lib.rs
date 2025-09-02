@@ -1,5 +1,5 @@
 use anyhow::Context;
-use binrw::{BinRead, BinReaderExt, BinWriterExt};
+use binrw::{BinRead, BinReaderExt, BinWriterExt, NullString};
 use lumps::{BspColorRgbExp, BspFace, BspModel, BspPlane, BspTexData, BspTexInfo};
 use std::io::{Cursor, Read, Seek, SeekFrom, Write};
 
@@ -115,6 +115,7 @@ pub struct BspLumpHeader {
 ///
 /// NOTE: Due to it's size, the embedded pak file is not included in this struct. It can be obtained by calling [`BspFile::read_lump`] for lump 40
 pub struct Bsp {
+    pub entities: String,
     pub planes: Vec<BspPlane>,
     pub vertices: Vec<[f32; 3]>,
     pub edges: Vec<[u16; 2]>,
@@ -180,7 +181,13 @@ impl Bsp {
             }
         }
 
+        let entity_lump = file.read_lump_raw(0)?;
+        let entities = Cursor::new(entity_lump)
+            .read_le::<NullString>()?
+            .try_into()?;
+
         Ok(Self {
+            entities,
             planes: file.read_lump(1)?,
             vertices: file.read_lump(3)?,
             edges: file.read_lump(12)?,

@@ -8,6 +8,7 @@ use image::EncodableLayout;
 use parking_lot::Mutex;
 use powerjack_vpk::VpkFile;
 use rayon::iter::{IntoParallelRefIterator, ParallelIterator};
+use serde::Deserialize;
 use tracing::level_filters::LevelFilter;
 use tracing_subscriber::{EnvFilter, layer::SubscriberExt};
 
@@ -116,10 +117,31 @@ fn main() -> anyhow::Result<()> {
 
     let mut renderer = renderer::Renderer::new(&window, &fs)?;
     let mut bsp = if let Some(bsp_path) = &args.bsp {
-        Some(BspStaticRenderer::load(
+        let bsp = BspStaticRenderer::load(
             File::open(bsp_path).context("Failed to open bsp file")?,
             &renderer,
-        )?)
+        )?;
+
+        if let Some(sky_camera_ent) = bsp
+            .entities
+            .iter()
+            .find(|v| v.get("classname").and_then(|v| v.as_str()) == Some("sky_camera"))
+        {
+            let scale =
+                <f32 as Deserialize>::deserialize(sky_camera_ent.get("scale").unwrap().clone())
+                    .unwrap_or(16.0);
+            let origin_str = sky_camera_ent.get("origin").unwrap().as_str().unwrap();
+            let origin = origin_str
+                .split(' ')
+                .map(|v| v.parse::<f32>().unwrap())
+                .collect::<Vec<f32>>();
+            let origin = Vec3::new(origin[0], origin[1], origin[2]);
+            renderer.sky_camera_scale = scale;
+            renderer.sky_camera_pos = origin;
+            println!("Sky camera scale: {}, position: {:?}", scale, origin);
+        }
+
+        Some(bsp)
     } else {
         None
     };
