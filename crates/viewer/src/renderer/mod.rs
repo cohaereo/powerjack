@@ -3,8 +3,8 @@ use std::sync::Arc;
 use anyhow::Context;
 use glam::Mat4;
 use wgpu::{
-    rwh::{HasDisplayHandle, HasWindowHandle},
     RenderPass,
+    rwh::{HasDisplayHandle, HasWindowHandle},
 };
 
 use crate::{
@@ -104,7 +104,7 @@ impl<'a> Renderer<'a> {
             .create_view(&wgpu::TextureViewDescriptor::default());
     }
 
-    pub fn render<F>(&mut self, map: &mut BspStaticRenderer, render: F)
+    pub fn render<F>(&mut self, render: F)
     where
         F: FnOnce(&mut Self, &mut RenderPass, Mat4),
     {
@@ -148,7 +148,6 @@ impl<'a> Renderer<'a> {
             let world_to_projective = self
                 .camera
                 .world_to_projective(size.width as f32 / size.height as f32);
-            map.render(&self.iad, &mut rpass, world_to_projective);
             render(self, &mut rpass, world_to_projective);
         }
 

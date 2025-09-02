@@ -3,5 +3,9 @@
 pub struct Args {
     /// Path to the BSP file to load
     #[clap(short, long)]
-    pub bsp: String,
+    pub bsp: Option<String>,
+
+    /// Path to the MDL file to load
+    #[clap(short, long)]
+    pub mdl: Option<String>,
 }

@@ -49,10 +49,13 @@ pub struct StripGroupHeader {
 pub struct StripHeader {
     pub num_indices: i32,
     pub index_offset: i32,
+
     pub num_verts: i32,
     pub vert_offset: i32,
+
     pub num_bones: i16,
     pub flags: StripFlags,
+
     pub num_bone_state_changes: i32,
     pub bone_state_change_offset: i32,
 }

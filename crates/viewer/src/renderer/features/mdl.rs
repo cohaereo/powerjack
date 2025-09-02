@@ -1,9 +1,12 @@
 use std::{io::Cursor, ops::Range, path::Path};
 
 use anyhow::Context;
+use binrw::BinReaderExt;
 use bytemuck::{Pod, Zeroable};
-use glam::{Mat4, Vec3};
+use chroma_dbg::ChromaDebug;
+use glam::{Mat4, Vec2, Vec3};
 use powerjack_mdl::{
+    mdl::{MdlData, StudioHeader},
     vtx::{StripFlags, VtxData},
     vvd::VvdData,
 };
@@ -32,6 +35,15 @@ impl MdlRenderer {
         let vvd_path = mdl_path.with_extension("vvd");
         let vtx_path = mdl_path.with_extension("dx90.vtx");
 
+        let mdl = {
+            let mdl_data = fs
+                .lock()
+                .read_path(&mdl_path.to_string_lossy())?
+                .context("MDL file not found")?;
+
+            MdlData::parse(&mut Cursor::new(mdl_data))?
+        };
+
         let vvd = {
             let vvd_data = fs
                 .lock()
@@ -49,19 +61,23 @@ impl MdlRenderer {
         };
 
         let mut buffers = vec![];
-        for body_part in &vtx.body_parts {
-            for (_model, lods) in body_part {
-                let (_lod, meshes) = &lods[0];
-                for (_mesh, strip_groups) in meshes {
-                    for strip_group in strip_groups {
-                        // for vertex in &strip_group.vertices {
-                        //     let orig_vertex = &vvd.vertices[vertex.orig_mesh_vert_id as usize];
-                        //     vertices.push(MdlVertex {
-                        //         position: orig_vertex.position.into(),
-                        //         normal: orig_vertex.normal.into(),
-                        //     });
-                        // }
+        let mut accum_index = 0;
+        for ((_body_part, models), vtx_models) in mdl.body_parts.iter().zip(vtx.body_parts.iter()) {
+            for ((model, meshes), (_vtx_model, vtx_lods)) in models.iter().zip(vtx_models.iter()) {
+                let mut fixup_vertices = Vec::with_capacity(model.num_vertices as usize);
+                if vvd.header.num_fixups > 0 {
+                    for fixup in &vvd.fixups {
+                        let verts = &vvd.vertices[fixup.source_vertex_id as usize
+                            ..(fixup.source_vertex_id + fixup.num_vertices) as usize];
+                        fixup_vertices.extend(verts);
+                    }
+                } else {
+                    fixup_vertices = vvd.vertices[0..model.num_vertices as usize].to_vec();
+                }
 
+                let (_vtx_lod, vtx_meshes) = &vtx_lods[0];
+                for (mesh, (_vtx_mesh, strip_groups)) in meshes.iter().zip(vtx_meshes.iter()) {
+                    for strip_group in strip_groups {
                         let mut vertices = vec![];
                         // let mut indices: Vec<u16> = vec![];
                         for strip in &strip_group.strips {
@@ -85,11 +101,13 @@ impl MdlRenderer {
                                 ];
 
                                 for vertex in &verts {
-                                    let orig_vertex =
-                                        &vvd.vertices[vertex.orig_mesh_vert_id as usize];
+                                    let orig_vertex = &fixup_vertices[accum_index
+                                        + mesh.vertex_offset as usize
+                                        + vertex.orig_mesh_vert_id as usize];
                                     vertices.push(MdlVertex {
                                         position: orig_vertex.position.into(),
                                         normal: orig_vertex.normal.into(),
+                                        uv: orig_vertex.uv.into(),
                                     });
                                 }
                             }
@@ -113,6 +131,8 @@ impl MdlRenderer {
                         buffers.push((vertex_buffer, index_buffer, range))
                     }
                 }
+
+                accum_index += model.num_vertices as usize;
             }
         }
 
@@ -139,11 +159,10 @@ impl MdlRenderer {
                         buffers: std::slice::from_ref(&MdlVertex::LAYOUT),
                     },
                     primitive: wgpu::PrimitiveState {
-                        // topology: wgpu::PrimitiveTopology::PointList,
                         topology: wgpu::PrimitiveTopology::TriangleList,
                         strip_index_format: None,
                         front_face: wgpu::FrontFace::Cw,
-                        cull_mode: Some(wgpu::Face::Back),
+                        cull_mode: None,
                         unclipped_depth: false,
                         polygon_mode: wgpu::PolygonMode::Fill,
                         conservative: false,
@@ -206,16 +225,22 @@ impl MdlRenderer {
 pub struct MdlVertex {
     pub position: Vec3,
     pub normal: Vec3,
+    pub uv: Vec2,
 }
 
 impl MdlVertex {
-    pub fn new(position: Vec3, normal: Vec3) -> MdlVertex {
-        MdlVertex { position, normal }
+    pub fn new(position: Vec3, normal: Vec3, uv: Vec2) -> MdlVertex {
+        MdlVertex {
+            position,
+            normal,
+            uv,
+        }
     }
 
     pub const ATTRIBUTES: &[wgpu::VertexAttribute] = &wgpu::vertex_attr_array![
         0 => Float32x3,
         1 => Float32x3,
+        2 => Float32x2,
     ];
 
     pub const LAYOUT: wgpu::VertexBufferLayout<'static> = wgpu::VertexBufferLayout {

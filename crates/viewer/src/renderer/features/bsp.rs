@@ -8,15 +8,15 @@ use std::{
 use anyhow::Context;
 use bytemuck::{Pod, Zeroable};
 use glam::{IVec2, Mat4, Vec2, Vec3, Vec4};
-use powerjack_bsp::{lumps::BspFace, Bsp, BspFile};
+use powerjack_bsp::{Bsp, BspFile, lumps::BspFace};
 use wgpu::util::DeviceExt;
 
 use crate::renderer::{
+    Renderer,
     iad::InstanceAdapterDevice,
     reloadable_pipeline::{ReloadablePipeline, ShaderSource},
     vmt::get_basetexture_for_vmt,
     vtf::{create_fallback_texture, load_vtf},
-    Renderer,
 };
 
 pub struct BspStaticRenderer {

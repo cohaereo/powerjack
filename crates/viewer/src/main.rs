@@ -114,35 +114,53 @@ fn main() -> anyhow::Result<()> {
     video_subsystem.text_input().start(&window);
 
     let mut renderer = renderer::Renderer::new(&window, &fs)?;
-    let mut bsp = BspStaticRenderer::load(
-        File::open(&args.bsp).context("Failed to open bsp file")?,
-        &renderer,
-    )?;
+    let mut bsp = if let Some(bsp_path) = &args.bsp {
+        Some(BspStaticRenderer::load(
+            File::open(bsp_path).context("Failed to open bsp file")?,
+            &renderer,
+        )?)
+    } else {
+        None
+    };
 
     let mut static_models = vec![];
-    for mdl_path in &bsp.data.static_prop_models {
-        info!("Loading model {mdl_path}");
-        match MdlRenderer::load(&renderer.fs, &renderer.iad, mdl_path) {
-            Ok(m) => static_models.push(Some(m)),
-            Err(e) => {
-                error!("Failed to load model {mdl_path}: {e}");
-                static_models.push(None);
+    let mut static_props = vec![];
+    if let Some(bsp) = &bsp {
+        for mdl_path in &bsp.data.static_prop_models {
+            info!("Loading model {mdl_path}");
+            match MdlRenderer::load(&renderer.fs, &renderer.iad, mdl_path) {
+                Ok(m) => static_models.push(Some(m)),
+                Err(e) => {
+                    error!("Failed to load model {mdl_path}: {e}");
+                    static_models.push(None);
+                }
             }
+        }
+
+        for prop in &bsp.data.static_props {
+            let pitch = Quat::from_axis_angle(Vec3::Y, prop.angles[0].to_radians());
+            let yaw = Quat::from_axis_angle(Vec3::Z, prop.angles[1].to_radians());
+            let roll = Quat::from_axis_angle(Vec3::X, prop.angles[2].to_radians());
+            static_props.push((
+                prop.model_index as usize,
+                Mat4::from_rotation_translation(yaw * pitch * roll, prop.origin.into()),
+            ));
         }
     }
 
-    let mut static_props = vec![];
-    for prop in &bsp.data.static_props {
-        let pitch = Quat::from_axis_angle(Vec3::Y, prop.angles[0].to_radians());
-        let yaw = Quat::from_axis_angle(Vec3::Z, prop.angles[1].to_radians());
-        let roll = Quat::from_axis_angle(Vec3::X, prop.angles[2].to_radians());
+    if let Some(mdl_path) = &args.mdl {
+        if let Ok(mdl) = MdlRenderer::load(&renderer.fs, &renderer.iad, mdl_path) {
+            static_models.push(Some(mdl));
+        } else {
+            error!("Failed to load model {mdl_path}");
+            static_models.push(None);
+        }
+
         static_props.push((
-            prop.model_index as usize,
-            Mat4::from_rotation_translation(yaw * pitch * roll, prop.origin.into()),
+            static_models.len() - 1,
+            Mat4::from_rotation_translation(Quat::IDENTITY, Vec3::Y * 512.0),
         ));
     }
-
-    info!("Loaded '{}'", args.bsp);
 
     // panic!();
     let mut event_pump = sdl_context.event_pump()?;
@@ -169,7 +187,11 @@ fn main() -> anyhow::Result<()> {
         }
 
         renderer.camera.update(dt);
-        renderer.render(&mut bsp, |renderer, rpass, world_to_projective| {
+        renderer.render(|renderer, rpass, world_to_projective| {
+            if let Some(bsp) = &mut bsp {
+                bsp.render(&renderer.iad, rpass, world_to_projective);
+            }
+
             for (model_index, transform) in &static_props {
                 if let Some(Some(model)) = static_models.get_mut(*model_index) {
                     model.render(&renderer.iad, rpass, world_to_projective, *transform);

@@ -98,23 +98,23 @@ impl ShaderSource {
     }
 
     pub fn reload(&self) {
-        let Self::File { source, .. } = self else {
-            return;
-        };
+        // let Self::File { source, .. } = self else {
+        //     return;
+        // };
 
-        let mut sauce = source.lock().unwrap();
-        let Ok(modified) = std::fs::metadata(&sauce.load_path).and_then(|m| m.modified()) else {
-            return;
-        };
+        // let mut sauce = source.lock().unwrap();
+        // let Ok(modified) = std::fs::metadata(&sauce.load_path).and_then(|m| m.modified()) else {
+        //     return;
+        // };
 
-        if modified > sauce.last_change {
-            sauce.last_change = modified;
-            sauce.changed = true;
-        }
+        // if modified > sauce.last_change {
+        //     sauce.last_change = modified;
+        //     sauce.changed = true;
+        // }
 
-        if let Ok(source) = std::fs::read_to_string(&sauce.load_path) {
-            sauce.source = source;
-        }
+        // if let Ok(source) = std::fs::read_to_string(&sauce.load_path) {
+        //     sauce.source = source;
+        // }
     }
 
     pub fn set_changed(&self, changed: bool) {

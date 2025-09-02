@@ -1118,6 +1118,7 @@ dependencies = [
  "binrw",
  "bitflags 2.9.3",
  "bytemuck",
+ "chroma-dbg",
  "clap",
  "game-detector",
  "glam",
