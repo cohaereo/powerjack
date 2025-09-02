@@ -42,7 +42,8 @@ var r_sampler_linear: sampler;
 @fragment
 fn fs_main(vertex: VertexOutput) -> @location(0) vec4<f32> {
     let light_dir = normalize(vec3<f32>(0.5, -0.5, -1.0));
-    let diffuse = max(dot(vertex.normal * 0.5 + 0.5, -light_dir), 0.02);
+    // let diffuse = 1.0;
+    let diffuse = max(dot(vertex.normal, -light_dir), 0.02);
 
     let sample = textureSample(r_texture, r_sampler_linear, vertex.uv);
 

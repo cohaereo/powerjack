@@ -8,7 +8,6 @@ use std::{
 use anyhow::Context;
 use bitflags::bitflags;
 use bytemuck::{Pod, Zeroable};
-use chroma_dbg::ChromaDebug;
 use glam::{IVec2, Mat4, Vec2, Vec3, Vec4};
 use powerjack_bsp::{Bsp, BspFile, lumps::BspFace};
 use serde::Deserialize;
@@ -293,7 +292,7 @@ impl BspStaticRenderer {
             contents: bytemuck::cast_slice(&indices),
         });
 
-        let lightmap_data = bsp
+        let mut lightmap_data = bsp
             .lightmap_data
             .iter()
             .map(|t| {
@@ -304,6 +303,13 @@ impl BspStaticRenderer {
                     | exponent_quantized as u32
             })
             .collect::<Vec<_>>();
+
+        if lightmap_data.is_empty() {
+            lightmap_data.push(0);
+            gpu_faces.iter_mut().for_each(|face| {
+                face.lightmap_offset = -1;
+            });
+        }
 
         let lightmap_buffer = iad.create_buffer_init(&wgpu::util::BufferInitDescriptor {
             label: Some("Static Map Lightmap Data"),

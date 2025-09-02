@@ -1,8 +1,8 @@
-use std::collections::HashMap;
+use serde::Deserialize;
 
-use serde::{Deserialize, Deserializer, de::DeserializeOwned};
-
-use crate::{fs::SharedFilesystem, util::ensure_path_has_extension};
+use crate::{
+    fs::SharedFilesystem, kv::deserialize_kv_case_insensitive, util::ensure_path_has_extension,
+};
 
 pub fn get_basetexture_for_vmt(
     fs: &SharedFilesystem,
@@ -22,7 +22,10 @@ pub fn get_basetexture_for_vmt(
         | Material::UnlitGeneric { basetexture }
         | Material::VertexLitGeneric { basetexture }
         | Material::WorldVertexTransition { basetexture }
-        | Material::UnlitTwoTexture { basetexture, .. } => Ok(Some(basetexture)),
+        | Material::UnlitTwoTexture { basetexture, .. }
+        | Material::Water {
+            normalmap: basetexture,
+        } => Ok(Some(basetexture)),
         Material::Patch { include } => get_basetexture_for_vmt(fs, &include),
     }
 }
@@ -55,34 +58,8 @@ pub enum Material {
     Patch {
         include: String,
     },
-}
-
-fn deserialize_kv_case_insensitive<'de, T, D>(deserializer: D) -> Result<T, D::Error>
-where
-    T: DeserializeOwned,
-    D: Deserializer<'de>,
-{
-    use vdf_reader::entry::Entry;
-
-    use std::collections::BTreeMap as Map;
-
-    let map = Map::<String, Entry>::deserialize(deserializer)?;
-    let lower: HashMap<String, Entry> = map
-        .into_iter()
-        .map(|(k, v)| (k.to_lowercase(), json_value_lowercase_keys(v)))
-        .collect();
-    T::deserialize(Entry::Table(lower.into())).map_err(serde::de::Error::custom)
-}
-
-fn json_value_lowercase_keys(v: vdf_reader::entry::Entry) -> vdf_reader::entry::Entry {
-    use vdf_reader::entry::Entry;
-    match v {
-        Entry::Table(map) => Entry::Table(
-            map.into_iter()
-                .map(|(k, v)| (k.to_lowercase(), json_value_lowercase_keys(v)))
-                .collect::<HashMap<String, Entry>>()
-                .into(),
-        ),
-        _ => v,
-    }
+    Water {
+        #[serde(rename = "$normalmap")]
+        normalmap: String,
+    },
 }

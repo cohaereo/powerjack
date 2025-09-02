@@ -1,6 +1,7 @@
 use std::{fs::File, io::BufReader, path::PathBuf, rc::Rc, sync::Arc, time::Instant};
 
 use anyhow::Context as _;
+use chroma_dbg::ChromaDebug;
 use clap::Parser;
 use game_detector::InstalledGame;
 use glam::{Mat4, Quat, Vec3};
@@ -13,12 +14,15 @@ use tracing::level_filters::LevelFilter;
 use tracing_subscriber::{EnvFilter, layer::SubscriberExt};
 
 use crate::{
+    entities::SkyCamera,
     fs::{Filesystem, Mountable, SharedFilesystem},
     renderer::features::{bsp::BspStaticRenderer, mdl::MdlRenderer},
 };
 
 pub mod args;
+pub mod entities;
 pub mod fs;
+pub mod kv;
 pub mod renderer;
 pub mod util;
 
@@ -78,14 +82,6 @@ fn main() -> anyhow::Result<()> {
         fs.add_mount(mount?);
     }
 
-    // fs.mount_vpk(tf_dir.join("tf2_textures_dir.vpk"))?;
-    // fs.mount_vpk(hl2_dir.join("hl2_textures_dir.vpk"))?;
-    // fs.mount_vpk(tf_dir.join("tf2_misc_dir.vpk"))?;
-    // fs.mount_vpk(hl2_dir.join("hl2_misc_dir.vpk"))?;
-    // fs.mount_vpk(tf_dir.join("tf2_sound_misc_dir.vpk"))?;
-    // if let Err(e) = fs.mount_vpk(tf_dir.join("tf2_sound_vo_english_dir.vpk")) {
-    //     error!("Failed to mount tf2_sound_vo_english_dir.vpk: {e}");
-    // }
     let fs: SharedFilesystem = Arc::new(Mutex::new(fs));
 
     let sdl_context = Rc::new(sdl3::init().unwrap());
@@ -127,18 +123,9 @@ fn main() -> anyhow::Result<()> {
             .iter()
             .find(|v| v.get("classname").and_then(|v| v.as_str()) == Some("sky_camera"))
         {
-            let scale =
-                <f32 as Deserialize>::deserialize(sky_camera_ent.get("scale").unwrap().clone())
-                    .unwrap_or(16.0);
-            let origin_str = sky_camera_ent.get("origin").unwrap().as_str().unwrap();
-            let origin = origin_str
-                .split(' ')
-                .map(|v| v.parse::<f32>().unwrap())
-                .collect::<Vec<f32>>();
-            let origin = Vec3::new(origin[0], origin[1], origin[2]);
-            renderer.sky_camera_scale = scale;
-            renderer.sky_camera_pos = origin;
-            println!("Sky camera scale: {}, position: {:?}", scale, origin);
+            let sky_camera: SkyCamera = Deserialize::deserialize(sky_camera_ent.clone())?;
+            renderer.sky_camera_scale = sky_camera.scale;
+            renderer.sky_camera_pos = sky_camera.origin.into();
         }
 
         Some(bsp)

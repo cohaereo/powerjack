@@ -186,6 +186,8 @@ impl Bsp {
             .read_le::<NullString>()?
             .try_into()?;
 
+        std::fs::write("entities.vdf", &entities)?;
+
         Ok(Self {
             entities,
             planes: file.read_lump(1)?,

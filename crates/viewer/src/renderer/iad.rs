@@ -58,7 +58,7 @@ impl InstanceAdapterDevice {
 
         device.on_uncaptured_error(Box::new(|error| {
             let error_str = error.to_string();
-            if error_str.contains("set_pipeline") {
+            if error_str.contains("set_pipeline") || error_str.contains("Encoder is invalid") {
                 return;
             }
             error!("wgpu error: {error}");
