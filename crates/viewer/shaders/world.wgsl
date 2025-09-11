@@ -128,5 +128,7 @@ fn fs_main(vertex: VertexOutput) -> @location(0) vec4<f32> {
         0.0
     );
 
+    if(sample.a <= 0.8) { discard; }
+
     return vec4(light * sample.xyz, 1.0);
 }
