@@ -8,7 +8,7 @@ use std::{
 use anyhow::Context;
 use bitflags::bitflags;
 use bytemuck::{Pod, Zeroable};
-use glam::{IVec2, Mat4, Vec2, Vec3, Vec4};
+use glam::{IVec2, Mat4, Vec2, Vec3, Vec4, Vec4Swizzles, vec2};
 use powerjack_bsp::{Bsp, BspFile, lumps::BspFace};
 use serde::Deserialize;
 use wgpu::util::DeviceExt;
@@ -103,6 +103,12 @@ impl BspStaticRenderer {
                 flags,
                 texture_index: ti.tex_data,
             });
+
+            // if f.disp_info != -1 {
+            //     let gf = gpu_faces.last_mut().unwrap();
+            //     gf.lightmap_offset += (lightmap_face_size.x * lightmap_face_size.y) * 1;
+            // }
+
             let color = Vec3::from([
                 td.reflectivity[0].sqrt(),
                 td.reflectivity[1].sqrt(),
@@ -124,12 +130,12 @@ impl BspStaticRenderer {
             // };
 
             macro_rules! add_vert {
-                ($v:expr, $n:expr) => {
+                ($v:expr, $luv:expr, $n:expr) => {
                     face_vertices.push(StaticMapVertex::new(
                         $v,
                         $n,
                         Vec2::ZERO,
-                        Vec2::ZERO,
+                        $luv,
                         color,
                         fi as u32,
                     ));
@@ -170,6 +176,7 @@ impl BspStaticRenderer {
                 let low_ray = corner_verts[(base_i + 1) % 4] - low_base;
                 let verts_wide = ((2 << (dispinfo.power - 1)) + 1) as usize;
                 let mut base_verts = vec![Vec3::ZERO; verts_wide * verts_wide];
+                let mut base_vert_luvs = vec![Vec2::ZERO; verts_wide * verts_wide];
                 let mut base_alphas = vec![0.0; verts_wide * verts_wide];
                 let base_dispvert = dispinfo.disp_vert_start.unsigned_abs() as usize;
 
@@ -189,6 +196,10 @@ impl BspStaticRenderer {
                         let alpha = vert.alpha / 255.0;
 
                         base_verts[ii] = mid_base + mid_ray * fx + offset * scale;
+                        base_vert_luvs[ii] = vec2(
+                            lightmap_face_size.x as f32 * fx - 1.0,
+                            lightmap_face_size.y as f32 * fy - 1.0,
+                        );
                         base_alphas[ii] = alpha;
                     }
                 }
@@ -197,30 +208,28 @@ impl BspStaticRenderer {
                     for x in 0..(verts_wide - 1) {
                         let ii = y * verts_wide + x;
 
-                        let v1 = base_verts[ii];
-                        let v2 = base_verts[ii + 1];
-                        let v3 = base_verts[ii + verts_wide];
-                        let v4 = base_verts[ii + verts_wide + 1];
+                        let v0 = base_verts[ii];
+                        let v1 = base_verts[ii + 1];
+                        let v2 = base_verts[ii + verts_wide];
+                        let v3 = base_verts[ii + verts_wide + 1];
+
+                        let v0_luv = base_vert_luvs[ii];
+                        let v1_luv = base_vert_luvs[ii + 1];
+                        let v2_luv = base_vert_luvs[ii + verts_wide];
+                        let v3_luv = base_vert_luvs[ii + verts_wide + 1];
+
+                        add_vert!(v0, v0_luv, normal);
+                        add_vert!(v1, v1_luv, normal);
+                        add_vert!(v2, v2_luv, normal);
+                        add_vert!(v3, v3_luv, normal);
 
                         if ii.is_multiple_of(2) {
-                            add_vert!(v1, normal);
-                            add_vert!(v2, normal);
-                            add_vert!(v3, normal);
-                            add_vert!(v2, normal);
-                            add_vert!(v4, normal);
-                            add_vert!(v3, normal);
+                            indices.extend_from_slice(&[i, i + 1, i + 2, i + 1, i + 3, i + 2]);
                         } else {
-                            add_vert!(v1, normal);
-                            add_vert!(v4, normal);
-                            add_vert!(v3, normal);
-                            add_vert!(v2, normal);
-                            add_vert!(v4, normal);
-                            add_vert!(v1, normal);
+                            indices.extend_from_slice(&[i, i + 3, i + 2, i + 1, i + 3, i]);
                         }
 
-                        indices.extend_from_slice(&[i, i + 1, i + 2, i + 3, i + 4, i + 5]);
-
-                        i += 6;
+                        i += 4;
                     }
                 }
             } else {
@@ -236,9 +245,13 @@ impl BspStaticRenderer {
                 }
 
                 for ii in 2..face_indices.len() {
-                    add_vert!(bsp.vertices[face_indices[ii] as usize].into(), normal);
-                    add_vert!(bsp.vertices[face_indices[ii - 1] as usize].into(), normal);
-                    add_vert!(bsp.vertices[face_indices[0] as usize].into(), normal);
+                    let v0: Vec3 = bsp.vertices[face_indices[ii] as usize].into();
+                    let v1: Vec3 = bsp.vertices[face_indices[ii - 1] as usize].into();
+                    let v2: Vec3 = bsp.vertices[face_indices[0] as usize].into();
+
+                    add_vert!(v0, Vec2::ZERO, normal);
+                    add_vert!(v1, Vec2::ZERO, normal);
+                    add_vert!(v2, Vec2::ZERO, normal);
 
                     indices.extend_from_slice(&[i, i + 1, i + 2]);
 
@@ -264,13 +277,17 @@ impl BspStaticRenderer {
                 }
 
                 // Lightmap UV
-                if f.lightmap_data_offset >= 0 {
-                    let lu = Vec4::from(ti.lightmap_vecs[0]);
-                    let lv = Vec4::from(ti.lightmap_vecs[1]);
-                    v.lightmap_uv.x = lu.dot(v.position.extend(1.0)) - f.lightmap_mins[0] as f32;
-                    v.lightmap_uv.y = lv.dot(v.position.extend(1.0)) - f.lightmap_mins[1] as f32;
-                } else {
-                    v.lightmap_uv = Vec2::ZERO;
+                if f.disp_info == -1 {
+                    if f.lightmap_data_offset >= 0 {
+                        let lu = Vec4::from(ti.lightmap_vecs[0]);
+                        let lv = Vec4::from(ti.lightmap_vecs[1]);
+                        v.lightmap_uv.x =
+                            (lu.xyz().dot(v.position) + lu.w) - f.lightmap_mins[0] as f32;
+                        v.lightmap_uv.y =
+                            (lv.xyz().dot(v.position) + lv.w) - f.lightmap_mins[1] as f32;
+                    } else {
+                        v.lightmap_uv = Vec2::ONE / 2.0;
+                    }
                 }
             }
 

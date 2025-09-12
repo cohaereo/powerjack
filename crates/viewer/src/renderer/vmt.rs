@@ -1,3 +1,4 @@
+use chroma_dbg::ChromaDebug;
 use serde::Deserialize;
 
 use crate::{
@@ -18,15 +19,16 @@ pub fn get_basetexture_for_vmt(
         deserialize_kv_case_insensitive(&mut vdf_reader::serde::Deserializer::from_str(&data_str))?;
 
     match mat {
-        Material::LightmappedGeneric { basetexture }
-        | Material::UnlitGeneric { basetexture }
-        | Material::VertexLitGeneric { basetexture }
-        | Material::WorldVertexTransition { basetexture }
+        Material::LightmappedGeneric { basetexture, .. }
+        | Material::UnlitGeneric { basetexture, .. }
+        | Material::VertexLitGeneric { basetexture, .. }
+        | Material::WorldVertexTransition { basetexture, .. }
         | Material::UnlitTwoTexture { basetexture, .. }
         | Material::Water {
             normalmap: basetexture,
+            ..
         } => Ok(Some(basetexture)),
-        Material::Patch { include } => get_basetexture_for_vmt(fs, &include),
+        Material::Patch { include, .. } => get_basetexture_for_vmt(fs, &include),
     }
 }
 
@@ -36,30 +38,53 @@ pub enum Material {
     LightmappedGeneric {
         #[serde(rename = "$basetexture")]
         basetexture: String,
+
+        #[serde(flatten)]
+        remaining_properties: vdf_reader::entry::Entry,
     },
     UnlitGeneric {
         #[serde(rename = "$basetexture")]
         basetexture: String,
+
+        #[serde(flatten)]
+        remaining_properties: vdf_reader::entry::Entry,
     },
     VertexLitGeneric {
         #[serde(rename = "$basetexture")]
         basetexture: String,
+
+        #[serde(flatten)]
+        remaining_properties: vdf_reader::entry::Entry,
     },
     WorldVertexTransition {
         #[serde(rename = "$basetexture")]
         basetexture: String,
+        #[serde(rename = "$basetexture2")]
+        basetexture2: String,
+
+        #[serde(flatten)]
+        remaining_properties: vdf_reader::entry::Entry,
     },
     UnlitTwoTexture {
         #[serde(rename = "$basetexture")]
         basetexture: String,
         #[serde(rename = "$texture2")]
         texture2: String,
+
+        #[serde(flatten)]
+        remaining_properties: vdf_reader::entry::Entry,
     },
     Patch {
         include: String,
+
+        #[serde(flatten)]
+        remaining_properties: vdf_reader::entry::Entry,
     },
     Water {
         #[serde(rename = "$normalmap")]
         normalmap: String,
+
+        #[serde(flatten)]
+        remaining_properties: vdf_reader::entry::Entry,
     },
 }
