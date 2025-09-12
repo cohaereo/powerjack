@@ -35,7 +35,7 @@ struct MapFace {
     lightmap_size: u32,
     lightmap_offset: i32,
     flags: u32,
-    texture_index: i32,
+    texture_indices: u32,
 }
 
 @group(0)
@@ -121,12 +121,32 @@ fn fs_main(vertex: VertexOutput) -> @location(0) vec4<f32> {
         light = sample_lightmap_bilinear(vertex.lightmap_texcoord, face);
     }
 
-    var sample = textureSampleLevel(
-        r_texture_array[face.texture_index],
-        r_sampler_linear,
-        vertex.texcoord,
-        0.0
-    );
+    let texture_index1 = face.texture_indices & 0xFFFF;
+    let texture_index2 = (face.texture_indices >> 16) & 0xFFFF;
+    var sample = vec4<f32>(1.0, 1.0, 1.0, 1.0);
+    // This surface uses 2 textures, blend them using vertex alpha
+    if(texture_index2 != 0xFFFF) {
+        let sample1 = textureSampleLevel(
+            r_texture_array[texture_index1],
+            r_sampler_linear,
+            vertex.texcoord,
+            0.0
+        );
+        let sample2 = textureSampleLevel(
+            r_texture_array[texture_index2],
+            r_sampler_linear,
+            vertex.texcoord,
+            0.0
+        );
+        sample = mix(sample1, sample2, vertex.color.a);
+    } else {
+        sample = textureSampleLevel(
+            r_texture_array[texture_index1],
+            r_sampler_linear,
+            vertex.texcoord,
+            0.0
+        );
+    }
 
     // if(sample.a < 0.5) { discard; }
 

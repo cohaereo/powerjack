@@ -46,28 +46,46 @@ impl BspStaticRenderer {
         renderer.fs.lock().mount_zip(pakfile)?;
 
         let mut textures = Vec::new();
+        let mut texdata_to_indices: Vec<(u16, Option<u16>)> = vec![];
         for td in &bsp.tex_data {
             let name = &bsp.texdata_string_table[td.name_index as usize];
             let path = format!("MATERIALS/{name}");
-            let (texture, view) = match get_basetexture_for_vmt(&renderer.fs, &path) {
-                Ok(Some(basetexture)) => {
+            let (view1, view2) = match get_basetexture_for_vmt(&renderer.fs, &path) {
+                Ok(Some((basetexture, basetexture2))) => {
                     let path = format!("MATERIALS/{basetexture}");
-                    match load_vtf(&renderer.fs, iad, &path) {
-                        Ok(o) => o,
+                    let t1 = match load_vtf(&renderer.fs, iad, &path) {
+                        Ok((_, view)) => view,
                         Err(e) => {
                             error!("Failed to load texture {path}: {e}");
-                            create_fallback_texture(iad, [255, 0, 255])
+                            create_fallback_texture(iad, [255, 0, 255]).1
                         }
-                    }
+                    };
+
+                    let t2 = basetexture2.map(|basetexture2| {
+                        match load_vtf(&renderer.fs, iad, &format!("MATERIALS/{basetexture2}")) {
+                            Ok((_, view)) => view,
+                            Err(e) => {
+                                error!("Failed to load texture {path}: {e}");
+                                create_fallback_texture(iad, [255, 0, 255]).1
+                            }
+                        }
+                    });
+
+                    (t1, t2)
                 }
-                Ok(None) => create_fallback_texture(iad, [255, 0, 0]),
+                Ok(None) => (create_fallback_texture(iad, [255, 0, 0]).1, None),
                 Err(e) => {
                     error!("Failed to load VMT {path}: {e}");
-                    create_fallback_texture(iad, [255, 0, 255])
+                    (create_fallback_texture(iad, [255, 0, 255]).1, None)
                 }
             };
 
-            textures.push((texture, view));
+            let offset = textures.len() as u16;
+            texdata_to_indices.push((offset, view2.is_some().then_some(offset + 1)));
+            textures.push(view1);
+            if let Some(view2) = view2 {
+                textures.push(view2);
+            }
         }
 
         let mut gpu_faces = Vec::with_capacity(bsp.faces.len());
@@ -96,13 +114,17 @@ impl BspStaticRenderer {
                 texture.to_lowercase().ends_with("toolsskybox"),
             );
             let lightmap_face_size = IVec2::from(f.lightmap_size) + IVec2::ONE;
-            gpu_faces.push(GpuMapFace {
-                lightmap_face_size_packed: (lightmap_face_size.x as u32 & 0xFFFF) << 16
-                    | (lightmap_face_size.y as u32 & 0xFFFF),
-                lightmap_offset: f.lightmap_data_offset / 4,
-                flags,
-                texture_index: ti.tex_data,
-            });
+            {
+                let (ti1, ti2) = texdata_to_indices[ti.tex_data as usize];
+                gpu_faces.push(GpuMapFace {
+                    lightmap_face_size_packed: (lightmap_face_size.x as u32 & 0xFFFF) << 16
+                        | (lightmap_face_size.y as u32 & 0xFFFF),
+                    lightmap_offset: f.lightmap_data_offset / 4,
+                    flags,
+                    texture_index: ti1 as u32
+                        | ti2.map(|t| (t as u32) << 16).unwrap_or(0xFFFF << 16),
+                });
+            }
 
             // if f.disp_info != -1 {
             //     let gf = gpu_faces.last_mut().unwrap();
@@ -130,13 +152,14 @@ impl BspStaticRenderer {
             // };
 
             macro_rules! add_vert {
-                ($v:expr, $luv:expr, $n:expr) => {
+                ($v:expr, $luv:expr, $alpha:expr, $n:expr) => {
                     face_vertices.push(StaticMapVertex::new(
                         $v,
                         $n,
                         Vec2::ZERO,
                         $luv,
                         color,
+                        $alpha,
                         fi as u32,
                     ));
                 };
@@ -218,10 +241,15 @@ impl BspStaticRenderer {
                         let v2_luv = base_vert_luvs[ii + verts_wide];
                         let v3_luv = base_vert_luvs[ii + verts_wide + 1];
 
-                        add_vert!(v0, v0_luv, normal);
-                        add_vert!(v1, v1_luv, normal);
-                        add_vert!(v2, v2_luv, normal);
-                        add_vert!(v3, v3_luv, normal);
+                        let v0_alpha = base_alphas[ii];
+                        let v1_alpha = base_alphas[ii + 1];
+                        let v2_alpha = base_alphas[ii + verts_wide];
+                        let v3_alpha = base_alphas[ii + verts_wide + 1];
+
+                        add_vert!(v0, v0_luv, v0_alpha, normal);
+                        add_vert!(v1, v1_luv, v1_alpha, normal);
+                        add_vert!(v2, v2_luv, v2_alpha, normal);
+                        add_vert!(v3, v3_luv, v3_alpha, normal);
 
                         if ii.is_multiple_of(2) {
                             indices.extend_from_slice(&[i, i + 1, i + 2, i + 1, i + 3, i + 2]);
@@ -249,9 +277,9 @@ impl BspStaticRenderer {
                     let v1: Vec3 = bsp.vertices[face_indices[ii - 1] as usize].into();
                     let v2: Vec3 = bsp.vertices[face_indices[0] as usize].into();
 
-                    add_vert!(v0, Vec2::ZERO, normal);
-                    add_vert!(v1, Vec2::ZERO, normal);
-                    add_vert!(v2, Vec2::ZERO, normal);
+                    add_vert!(v0, Vec2::ZERO, 0.0, normal);
+                    add_vert!(v1, Vec2::ZERO, 0.0, normal);
+                    add_vert!(v2, Vec2::ZERO, 0.0, normal);
 
                     indices.extend_from_slice(&[i, i + 1, i + 2]);
 
@@ -423,7 +451,7 @@ impl BspStaticRenderer {
             ..Default::default()
         });
 
-        let texture_views = textures.iter().map(|(_, view)| view).collect::<Vec<_>>();
+        let texture_views = textures.iter().collect::<Vec<_>>();
         let texture_bindgroup = iad.create_bind_group(&wgpu::BindGroupDescriptor {
             label: None,
             layout: &texture_bindgroup_layout,
@@ -555,6 +583,7 @@ impl StaticMapVertex {
         uv: Vec2,
         lightmap_uv: Vec2,
         color: Vec3,
+        alpha: f32,
         face: u32,
     ) -> StaticMapVertex {
         StaticMapVertex {
@@ -562,7 +591,7 @@ impl StaticMapVertex {
             normal,
             uv,
             lightmap_uv,
-            color: color.extend(1.0),
+            color: color.extend(alpha),
             face,
         }
     }
@@ -589,7 +618,7 @@ pub struct GpuMapFace {
     pub lightmap_face_size_packed: u32,
     pub lightmap_offset: i32,
     pub flags: FaceFlags,
-    pub texture_index: i32,
+    pub texture_index: u32,
 }
 
 bitflags! {

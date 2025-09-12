@@ -1,4 +1,3 @@
-use chroma_dbg::ChromaDebug;
 use serde::Deserialize;
 
 use crate::{
@@ -8,7 +7,7 @@ use crate::{
 pub fn get_basetexture_for_vmt(
     fs: &SharedFilesystem,
     path: &str,
-) -> anyhow::Result<Option<String>> {
+) -> anyhow::Result<Option<(String, Option<String>)>> {
     let path = ensure_path_has_extension(path, "vmt");
     let data = fs.lock().read_path(&path)?;
     let Some(data) = data else {
@@ -22,12 +21,16 @@ pub fn get_basetexture_for_vmt(
         Material::LightmappedGeneric { basetexture, .. }
         | Material::UnlitGeneric { basetexture, .. }
         | Material::VertexLitGeneric { basetexture, .. }
-        | Material::WorldVertexTransition { basetexture, .. }
         | Material::UnlitTwoTexture { basetexture, .. }
         | Material::Water {
             normalmap: basetexture,
             ..
-        } => Ok(Some(basetexture)),
+        } => Ok(Some((basetexture, None))),
+        Material::WorldVertexTransition {
+            basetexture,
+            basetexture2,
+            ..
+        } => Ok(Some((basetexture, Some(basetexture2)))),
         Material::Patch { include, .. } => get_basetexture_for_vmt(fs, &include),
     }
 }
