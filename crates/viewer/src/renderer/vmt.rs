@@ -30,7 +30,7 @@ pub fn get_basetexture_for_vmt(
             basetexture,
             basetexture2,
             ..
-        } => Ok(Some((basetexture, Some(basetexture2)))),
+        } => Ok(Some((basetexture, basetexture2))),
         Material::Patch { include, .. } => get_basetexture_for_vmt(fs, &include),
     }
 }
@@ -63,7 +63,7 @@ pub enum Material {
         #[serde(rename = "$basetexture")]
         basetexture: String,
         #[serde(rename = "$basetexture2")]
-        basetexture2: String,
+        basetexture2: Option<String>,
 
         #[serde(flatten)]
         remaining_properties: vdf_reader::entry::Entry,

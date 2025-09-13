@@ -1,6 +1,5 @@
 use std::{fs::File, io::BufReader, path::PathBuf, rc::Rc, sync::Arc, time::Instant};
 
-use chroma_dbg::ChromaDebug;
 use clap::Parser;
 use eyre::Context;
 use game_detector::InstalledGame;
