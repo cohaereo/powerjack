@@ -8,4 +8,8 @@ pub struct Args {
     /// Path to the MDL file to load
     #[clap(short, long)]
     pub mdl: Option<String>,
+
+    /// Additional VPKs to mount in the virtual filesystem
+    #[clap(short, long)]
+    pub mount: Vec<String>,
 }

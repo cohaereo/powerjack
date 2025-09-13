@@ -62,12 +62,15 @@ fn main() -> eyre::Result<()> {
     let args = args::Args::parse();
 
     let mut fs = Filesystem::default();
-    let mount_paths = [
+    let mut mount_paths = vec![
         tf_dir.join("tf2_textures_dir.vpk"),
         hl2_dir.join("hl2_textures_dir.vpk"),
         tf_dir.join("tf2_misc_dir.vpk"),
         hl2_dir.join("hl2_misc_dir.vpk"),
     ];
+
+    mount_paths.extend(args.mount.iter().map(PathBuf::from));
+
     let mounts: Vec<eyre::Result<Box<dyn Mountable>>> = mount_paths
         .par_iter()
         .map(|path| {
