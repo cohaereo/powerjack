@@ -1,6 +1,5 @@
 use crate::fs::Mountable;
 use std::io::{Read, Seek};
-use std::path::Path;
 use zip_lzma::result::ZipError;
 
 impl<R: Read + Seek + Send + Sync> Mountable for zip_lzma::read::ZipArchive<R> {
@@ -10,9 +9,16 @@ impl<R: Read + Seek + Send + Sync> Mountable for zip_lzma::read::ZipArchive<R> {
         while path.contains("//") {
             path = path.replace("//", "/");
         }
-        let path = Path::new(&path);
 
-        let mut file = match self.by_name(&path.to_string_lossy()) {
+        let Some(real_path) = self
+            .file_names()
+            .find(|zip_path| zip_path.to_lowercase() == *path)
+            .map(|s| s.to_string())
+        else {
+            return Ok(None);
+        };
+
+        let mut file = match self.by_name(&real_path) {
             Ok(o) => o,
             Err(e) => {
                 return match e {
