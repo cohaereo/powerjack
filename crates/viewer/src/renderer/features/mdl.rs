@@ -1,7 +1,7 @@
 use std::{io::Cursor, ops::Range, path::Path};
 
-use anyhow::Context;
 use bytemuck::{Pod, Zeroable};
+use eyre::{Context, OptionExt};
 use glam::{Mat4, Vec2, Vec3};
 use powerjack_mdl::{
     mdl::MdlData,
@@ -31,7 +31,7 @@ impl MdlRenderer {
         fs: &SharedFilesystem,
         iad: &InstanceAdapterDevice,
         path: impl AsRef<Path>,
-    ) -> anyhow::Result<Self> {
+    ) -> eyre::Result<Self> {
         let mdl_path = path.as_ref();
         let vvd_path = mdl_path.with_extension("vvd");
         let vtx_path = mdl_path.with_extension("dx90.vtx");
@@ -40,7 +40,7 @@ impl MdlRenderer {
             let mdl_data = fs
                 .lock()
                 .read_path(&mdl_path.to_string_lossy())?
-                .context("MDL file not found")?;
+                .ok_or_eyre("MDL file not found")?;
 
             MdlData::parse(&mut Cursor::new(mdl_data))?
         };
@@ -49,7 +49,7 @@ impl MdlRenderer {
             let vvd_data = fs
                 .lock()
                 .read_path(&vvd_path.to_string_lossy())?
-                .context("VVD file not found")?;
+                .ok_or_eyre("VVD file not found")?;
             VvdData::parse(&mut Cursor::new(vvd_data))?
         };
 
@@ -57,7 +57,7 @@ impl MdlRenderer {
             let vtx_data = fs
                 .lock()
                 .read_path(&vtx_path.to_string_lossy())?
-                .context("VTX file not found")?;
+                .ok_or_eyre("VTX file not found")?;
             VtxData::parse(&mut Cursor::new(vtx_data))?
         };
 

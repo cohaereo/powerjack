@@ -1,6 +1,6 @@
 use std::sync::Arc;
 
-use anyhow::Context;
+use eyre::OptionExt;
 use glam::{Mat4, Vec3};
 use wgpu::{
     RenderPass,
@@ -31,7 +31,7 @@ pub struct Renderer<'a> {
 }
 
 impl<'a> Renderer<'a> {
-    pub fn new(window: &sdl3::video::Window, fs: &SharedFilesystem) -> anyhow::Result<Self> {
+    pub fn new(window: &sdl3::video::Window, fs: &SharedFilesystem) -> eyre::Result<Self> {
         let iad = pollster::block_on(InstanceAdapterDevice::new())?;
         let surface = unsafe {
             iad.instance
@@ -46,7 +46,7 @@ impl<'a> Renderer<'a> {
                 window.size_in_pixels().0,
                 window.size_in_pixels().1,
             )
-            .context("Failed to get surface configuration")?;
+            .ok_or_eyre("Failed to get surface configuration")?;
         surface_config.present_mode = wgpu::PresentMode::AutoNoVsync;
         surface.configure(&iad, &surface_config);
 

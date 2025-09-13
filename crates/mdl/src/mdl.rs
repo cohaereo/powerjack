@@ -146,7 +146,7 @@ pub struct MdlData {
 }
 
 impl MdlData {
-    pub fn parse<R: Read + Seek>(input: &mut R) -> anyhow::Result<Self> {
+    pub fn parse<R: Read + Seek>(input: &mut R) -> eyre::Result<Self> {
         let header = input.read_le::<StudioHeader>()?;
 
         let mut mdl_data = Self {

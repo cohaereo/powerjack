@@ -5,9 +5,9 @@ use std::{
     ops::Range,
 };
 
-use anyhow::Context;
 use bitflags::bitflags;
 use bytemuck::{Pod, Zeroable};
+use eyre::Context;
 use glam::{IVec2, Mat4, Vec2, Vec3, Vec4, Vec4Swizzles, vec2};
 use powerjack_bsp::{Bsp, BspFile, lumps::BspFace};
 use serde::Deserialize;
@@ -37,7 +37,7 @@ pub struct BspStaticRenderer {
 }
 
 impl BspStaticRenderer {
-    pub fn load<R: Read + Seek>(reader: R, renderer: &Renderer) -> anyhow::Result<Self> {
+    pub fn load<R: Read + Seek>(reader: R, renderer: &Renderer) -> eyre::Result<Self> {
         let iad = &renderer.iad;
 
         let mut file = BspFile::new(reader)?;
@@ -56,7 +56,7 @@ impl BspStaticRenderer {
                     let t1 = match load_vtf(&renderer.fs, iad, &path) {
                         Ok((_, view)) => view,
                         Err(e) => {
-                            error!("Failed to load texture {path}: {e}");
+                            error!("Failed to load texture {path}: {e:?}");
                             create_fallback_texture(iad, [255, 0, 255]).1
                         }
                     };
@@ -65,7 +65,7 @@ impl BspStaticRenderer {
                         match load_vtf(&renderer.fs, iad, &format!("MATERIALS/{basetexture2}")) {
                             Ok((_, view)) => view,
                             Err(e) => {
-                                error!("Failed to load texture {path}: {e}");
+                                error!("Failed to load texture {path}: {e:?}");
                                 create_fallback_texture(iad, [255, 0, 255]).1
                             }
                         }
@@ -73,9 +73,12 @@ impl BspStaticRenderer {
 
                     (t1, t2)
                 }
-                Ok(None) => (create_fallback_texture(iad, [255, 0, 0]).1, None),
+                Ok(None) => {
+                    error!("VMT {path} not found");
+                    (create_fallback_texture(iad, [255, 0, 0]).1, None)
+                }
                 Err(e) => {
-                    error!("Failed to load VMT {path}: {e}");
+                    error!("Failed to load VMT {path}: {e:?}");
                     (create_fallback_texture(iad, [255, 0, 255]).1, None)
                 }
             };

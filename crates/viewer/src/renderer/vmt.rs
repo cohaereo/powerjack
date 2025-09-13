@@ -7,7 +7,7 @@ use crate::{
 pub fn get_basetexture_for_vmt(
     fs: &SharedFilesystem,
     path: &str,
-) -> anyhow::Result<Option<(String, Option<String>)>> {
+) -> eyre::Result<Option<(String, Option<String>)>> {
     let path = ensure_path_has_extension(path, "vmt");
     let data = fs.lock().read_path(&path)?;
     let Some(data) = data else {

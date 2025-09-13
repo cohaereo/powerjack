@@ -1,5 +1,5 @@
-use anyhow::Context;
 use binrw::{BinRead, BinReaderExt, BinWriterExt, NullString};
+use eyre::{Context, OptionExt};
 use lumps::{BspColorRgbExp, BspFace, BspModel, BspPlane, BspTexData, BspTexInfo};
 use std::io::{Cursor, Read, Seek, SeekFrom, Write};
 
@@ -35,12 +35,12 @@ pub struct BspFile<R: Read + Seek> {
 }
 
 impl<R: Read + Seek> BspFile<R> {
-    pub fn new(mut reader: R) -> anyhow::Result<Self> {
+    pub fn new(mut reader: R) -> eyre::Result<Self> {
         let header = reader.read_le::<BspHeader>()?;
         Ok(Self { reader, header })
     }
 
-    pub fn read_lump_raw_offset(&mut self, offset: u64, length: usize) -> anyhow::Result<Vec<u8>> {
+    pub fn read_lump_raw_offset(&mut self, offset: u64, length: usize) -> eyre::Result<Vec<u8>> {
         self.reader.seek(SeekFrom::Start(offset))?;
         let id = self.reader.read_le::<[u8; 4]>()?;
         if length >= 4 && &id == b"LZMA" {
@@ -68,17 +68,17 @@ impl<R: Read + Seek> BspFile<R> {
         }
     }
 
-    pub fn read_lump_raw(&mut self, index: usize) -> anyhow::Result<Vec<u8>> {
+    pub fn read_lump_raw(&mut self, index: usize) -> eyre::Result<Vec<u8>> {
         let lump = self
             .header
             .lumps
             .get(index)
-            .context("Lump index out of bounds")?;
+            .ok_or_eyre("Lump index out of bounds")?;
 
         self.read_lump_raw_offset(lump.offset as u64, lump.length as usize)
     }
 
-    pub fn read_lump_ex<'a, T>(&mut self, index: usize, max: usize) -> anyhow::Result<Vec<T>>
+    pub fn read_lump_ex<'a, T>(&mut self, index: usize, max: usize) -> eyre::Result<Vec<T>>
     where
         T: BinRead,
         T::Args<'a>: Default,
@@ -94,7 +94,7 @@ impl<R: Read + Seek> BspFile<R> {
         Ok(v)
     }
 
-    pub fn read_lump<'a, T>(&mut self, index: usize) -> anyhow::Result<Vec<T>>
+    pub fn read_lump<'a, T>(&mut self, index: usize) -> eyre::Result<Vec<T>>
     where
         T: BinRead,
         T::Args<'a>: Default,
@@ -140,7 +140,7 @@ pub struct Bsp {
 }
 
 impl Bsp {
-    pub fn parse<R: Read + Seek>(file: &mut BspFile<R>) -> anyhow::Result<Self> {
+    pub fn parse<R: Read + Seek>(file: &mut BspFile<R>) -> eyre::Result<Self> {
         let texdata_string_data = file.read_lump_raw(43)?;
         let texdata_string_offsets: Vec<u32> = file.read_lump(44)?;
 

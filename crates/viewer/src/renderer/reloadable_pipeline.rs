@@ -70,7 +70,7 @@ pub enum ShaderSource {
 impl ShaderSource {
     /// Creates a new shader source from a file. Errors if the given path does not exist or cannot be read.
     /// Path is relative crates/viewer, or to the current working directory if it's not found.
-    pub fn new_file(path: &str) -> anyhow::Result<Self> {
+    pub fn new_file(path: &str) -> eyre::Result<Self> {
         let path_dev = PathBuf::from_str("crates/viewer/")?.join(path);
         let (source, load_path) = std::fs::read_to_string(&path_dev)
             .map(|s| (s, path_dev))

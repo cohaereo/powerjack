@@ -13,7 +13,7 @@ pub mod vpk;
 pub mod zip;
 
 pub trait Mountable: Send + Sync {
-    fn read_path(&mut self, path: &str) -> anyhow::Result<Option<Vec<u8>>>;
+    fn read_path(&mut self, path: &str) -> eyre::Result<Option<Vec<u8>>>;
 
     // /// Get all available paths in the mount point. All paths are lowercase
     // fn get_all_paths(&self) -> Vec<PathBuf>;
@@ -33,7 +33,7 @@ impl Filesystem {
         self.mounts.push(mount);
     }
 
-    pub fn mount_vpk(&mut self, path: impl AsRef<Path>) -> anyhow::Result<()> {
+    pub fn mount_vpk(&mut self, path: impl AsRef<Path>) -> eyre::Result<()> {
         info!("Mounting VPK '{}'", path.as_ref().display());
         let f = BufReader::with_capacity(1024 * 1024, File::open(&path)?);
         self.add_mount(Box::new(VpkFile::new(
@@ -43,12 +43,12 @@ impl Filesystem {
         Ok(())
     }
 
-    pub fn mount_zip(&mut self, zip: Vec<u8>) -> anyhow::Result<()> {
+    pub fn mount_zip(&mut self, zip: Vec<u8>) -> eyre::Result<()> {
         self.add_mount(Box::new(ZipArchive::new(Cursor::new(zip))?));
         Ok(())
     }
 
-    pub fn read_path(&mut self, path: &str) -> anyhow::Result<Option<Vec<u8>>> {
+    pub fn read_path(&mut self, path: &str) -> eyre::Result<Option<Vec<u8>>> {
         for mount in &mut self.mounts {
             if let Some(data) = mount.read_path(path)? {
                 return Ok(Some(data));

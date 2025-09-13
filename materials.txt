@@ -1,0 +1,2174 @@
+ INFO powerjack: Reading VPK E:\Steam\steamapps\common\Team Fortress 2\tf\tf2_textures_dir.vpk
+ INFO powerjack: Reading VPK E:\Steam\steamapps\common\Team Fortress 2\hl2\hl2_textures_dir.vpk
+ INFO powerjack: Reading VPK E:\Steam\steamapps\common\Team Fortress 2\tf\tf2_misc_dir.vpk
+ INFO powerjack: Reading VPK E:\Steam\steamapps\common\Team Fortress 2\hl2\hl2_misc_dir.vpk
+ INFO powerjack::renderer::iad: Available adapters:
+ INFO powerjack::renderer::iad:   - #0 - NVIDIA GeForce RTX 4070, NVIDIA (backend vulkan)
+ INFO powerjack::renderer::iad:   - #1 - AMD Radeon(TM) Graphics, AMD proprietary driver (backend vulkan)
+ INFO powerjack::renderer::iad:   - #2 - NVIDIA GeForce RTX 4070, 32.0.15.8088 (backend dx12)
+ INFO powerjack::renderer::iad:   - #3 - AMD Radeon(TM) Graphics, 31.0.14046.0 (backend dx12)
+ INFO powerjack::renderer::iad:   - #4 - NVIDIA GeForce RTX 4070, 32.0.15.8088 (backend dx12)
+ INFO powerjack::renderer::iad:   - #5 - Microsoft Basic Render Driver, 10.0.26100.3624 (backend dx12)
+LightmappedGeneric {
+    basetexture: "Tools/toolsnodraw",
+    remaining_properties: Table(Table({
+        "%keywords": Value(Value("airexchange,borealis,c17downtown,c17industrial,c17sewers,c17skyscraper,c17trainstation,combine,kraken,wasteland")),
+        "%compilenodraw": Value(Value("1")),
+    })),
+}
+LightmappedGeneric {
+    basetexture: "Concrete/concretefloor003",
+    remaining_properties: Table(Table({
+        "$detail": Value(Value("overlays/detail001")),
+        "%keywords": Value(Value("tf")),
+        "$detailscale": Value(Value("1.9")),
+        "$detailblendfactor": Value(Value("1")),
+        "$detailblendmode": Value(Value("0")),
+    })),
+}
+LightmappedGeneric {
+    basetexture: "winter/cobblewall002",
+    remaining_properties: Table(Table({
+        "%keywords": Value(Value("tf")),
+        "$bumpmap": Value(Value("Brick/cobblewall001_normal")),
+    })),
+}
+LightmappedGeneric {
+    basetexture: "Wood/grain_elevator_silo_10b",
+    remaining_properties: Table(Table({
+        "$detailblendmode": Value(Value("0")),
+        "$detailscale": Value(Value("1")),
+        "$detailblendfactor": Value(Value("1")),
+        "%keywords": Value(Value("tf")),
+        "$surfaceprop": Value(Value("wood")),
+        "$detail": Value(Value("overlays/detail006")),
+    })),
+}
+LightmappedGeneric {
+    basetexture: "pl_barnblitz/woodwall_darkbrown001",
+    remaining_properties: Table(Table({
+        "$surfaceprop": Value(Value("wood")),
+        "%keywords": Value(Value("tf")),
+    })),
+}
+LightmappedGeneric {
+    basetexture: "Tools/toolsskybox",
+    remaining_properties: Table(Table({
+        "%keywords": Value(Value("airexchange,borealis,c17downtown,c17industrial,c17sewers,c17skyscraper,c17trainstation,combine,kraken,wasteland")),
+        "$surfaceprop": Value(Value("default_silent")),
+        "%compilesky": Value(Value("1")),
+    })),
+}
+LightmappedGeneric {
+    basetexture: "Tools/toolsskip",
+    remaining_properties: Table(Table({
+        "%keywords": Value(Value("airexchange,borealis,c17downtown,c17industrial,c17sewers,c17skyscraper,c17trainstation,combine,kraken,wasteland")),
+        "$translucent": Value(Value("1")),
+        "%compileskip": Value(Value("1")),
+    })),
+}
+LightmappedGeneric {
+    basetexture: "Tools/toolsblockbullets",
+    remaining_properties: Table(Table({
+        "%compilenodraw": Value(Value("1")),
+        "%keywords": Value(Value("Tools")),
+        "$nodecal": Value(Value("1")),
+        "$translucent": Value(Value("1")),
+    })),
+}
+LightmappedGeneric {
+    basetexture: "Wood/wall007a",
+    remaining_properties: Table(Table({
+        "$detail": Value(Value("overlays/detail006")),
+        "$surfaceprop": Value(Value("wood")),
+        "%keywords": Value(Value("tf")),
+        "$detailscale": Value(Value("1")),
+        "$detailblendmode": Value(Value("0")),
+        "$detailblendfactor": Value(Value("1")),
+    })),
+}
+WorldVertexTransition {
+    basetexture: "Nature/dirtground009",
+    remaining_properties: Table(Table({
+        "$basetexture2": Value(Value("Nature/grass_07")),
+        "$surfaceprop": Value(Value("dirt")),
+        "$bumpmap": Value(Value("Nature/dirtground001_height-ssbump")),
+        "%detailtype": Value(Value("tf_forest_grass")),
+        "%keywords": Value(Value("tf")),
+        "$ssbump": Value(Value("1")),
+        "$blendmodulatetexture": Value(Value("Nature/grass_blendmask")),
+        "%tooltexture": Value(Value("Nature/blendgroundtograss007_tooltexture")),
+    })),
+}
+LightmappedGeneric {
+    basetexture: "winter/rockwall014",
+    remaining_properties: Table(Table({
+        "$detailscale": Array(Array([ Value(Value("2.1")), Value(Value("4.2")) ])),
+        "$bumpmap": Value(Value("Nature/rockwall004_bump-ssbump")),
+        "$detailblendfactor": Value(Value("1")),
+        "$ssbump": Value(Value("1")),
+        "$detail": Value(Value("Overlays/detail004")),
+        "$surfaceprop": Value(Value("dirt")),
+        "%keywords": Value(Value("tf")),
+        "$detailblendmode": Value(Value("0")),
+    })),
+}
+LightmappedGeneric {
+    basetexture: "japan/wood/japanese_redwood02",
+    remaining_properties: Table(Table({
+        "%keywords": Value(Value("tf, pacific, japan")),
+        "$surfaceprop": Value(Value("wood")),
+    })),
+}
+ERROR powerjack::renderer::features::bsp: Failed to load VMT MATERIALS/WATER/CAUSTIC/CAUSTICFADE: Unknown variant "decalmodulate" expected on of expected on of lightmappedgeneric, unlitgeneric, vertexlitgeneric, worldvertextransition, unlittwotexture, patch, water
+LightmappedGeneric {
+    basetexture: "japan/wood/japanese_graywood01",
+    remaining_properties: Table(Table({
+        "%keywords": Value(Value("tf, pacific, japan")),
+        "$surfaceprop": Value(Value("wood")),
+    })),
+}
+LightmappedGeneric {
+    basetexture: "medieval/woodtrim001",
+    remaining_properties: Table(Table({
+        "$surfaceprop": Value(Value("wood")),
+        "%keywords": Value(Value("tf")),
+    })),
+}
+LightmappedGeneric {
+    basetexture: "Tools/toolshint",
+    remaining_properties: Table(Table({
+        "%keywords": Value(Value("airexchange,borealis,c17downtown,c17industrial,c17sewers,c17skyscraper,c17trainstation,combine,kraken,wasteland")),
+        "$translucent": Value(Value("1")),
+        "%compilehint": Value(Value("1")),
+    })),
+}
+UnlitGeneric {
+    basetexture: "custom/waterfall002",
+    remaining_properties: Table(Table({
+        "$nocull": Value(Value("1")),
+        "$surfaceprop": Value(Value("default")),
+        "proxies": Table(Table({
+            "texturescroll": Table(Table({
+                "texturescrollangle": Value(Value("90")),
+                "texturescrollrate": Value(Value("-0.34")),
+                "texturescrollvar": Value(Value("$basetexturetransform")),
+            })),
+        })),
+        "$translucent": Value(Value("1")),
+    })),
+}
+LightmappedGeneric {
+    basetexture: "Wood/wood_bridge001",
+    remaining_properties: Table(Table({
+        "%keywords": Value(Value("tf")),
+        "$detailscale": Value(Value("1")),
+        "$detailblendmode": Value(Value("0")),
+        "$surfaceprop": Value(Value("wood")),
+        "$detailblendfactor": Value(Value("1")),
+        "$detail": Value(Value("overlays/detail006")),
+    })),
+}
+LightmappedGeneric {
+    basetexture: "construction/wood/constructwood001",
+    remaining_properties: Table(Table({
+        "$surfaceprop": Value(Value("wood")),
+        "%keywords": Value(Value("tf")),
+    })),
+}
+LightmappedGeneric {
+    basetexture: "Wood/western_woodwall002",
+    remaining_properties: Table(Table({
+        "$detailscale": Value(Value("1")),
+        "%keywords": Value(Value("tf")),
+        "$surfaceprop": Value(Value("wood")),
+        "$detailblendfactor": Value(Value("0.8")),
+        "$detail": Value(Value("overlays/detail006")),
+        "$detailblendmode": Value(Value("0")),
+    })),
+}
+LightmappedGeneric {
+    basetexture: "Wood/grain_elevator_facade_14a",
+    remaining_properties: Table(Table({
+        "$detail": Value(Value("overlays/detail006")),
+        "$surfaceprop": Value(Value("wood")),
+        "$detailblendmode": Value(Value("0")),
+        "%keywords": Value(Value("tf")),
+        "$detailscale": Value(Value("1")),
+        "$detailblendfactor": Value(Value("1")),
+    })),
+}
+LightmappedGeneric {
+    basetexture: "japan/wood/japanese_bluewood02",
+    remaining_properties: Table(Table({
+        "%keywords": Value(Value("tf, pacific, japan")),
+        "$surfaceprop": Value(Value("wood")),
+    })),
+}
+WorldVertexTransition {
+    basetexture: "Nature/dirtground009",
+    remaining_properties: Table(Table({
+        "%keywords": Value(Value("tf")),
+        "$surfaceprop": Value(Value("dirt")),
+        "$blendmodulatetexture": Value(Value("Nature/grass_blendmask")),
+        "$bumpmap": Value(Value("Nature/dirtground001_height-ssbump")),
+        "$basetexture2": Value(Value("Nature/grass_07")),
+        "$ssbump": Value(Value("1")),
+        "%tooltexture": Value(Value("Nature/blendgroundtograss007_tooltexture")),
+    })),
+}
+LightmappedGeneric {
+    basetexture: "pl_barnblitz/woodwall_brownslats001",
+    remaining_properties: Table(Table({
+        "$ssbump": Value(Value("1")),
+        "$detailblendmode": Value(Value("0")),
+        "$detailscale": Value(Value("1")),
+        "$surfaceprop": Value(Value("wood")),
+        "$detailblendfactor": Value(Value("1")),
+        "$detail": Value(Value("overlays/detail006")),
+        "$bumpmap": Value(Value("Wood/wall020_height-ssbump")),
+        "%keywords": Value(Value("tf")),
+    })),
+}
+UnlitGeneric {
+    basetexture: "custom/waterfall002",
+    remaining_properties: Table(Table({
+        "$surfaceprop": Value(Value("default")),
+        "proxies": Table(Table({
+            "texturescroll": Table(Table({
+                "texturescrollrate": Value(Value("-0.23")),
+                "texturescrollvar": Value(Value("$basetexturetransform")),
+                "texturescrollangle": Value(Value("100")),
+            })),
+        })),
+    })),
+}
+LightmappedGeneric {
+    basetexture: "Tools/toolstrigger",
+    remaining_properties: Table(Table({
+        "%compiletrigger": Value(Value("1")),
+        "%keywords": Value(Value("airexchange,borealis,c17downtown,c17industrial,c17sewers,c17skyscraper,c17trainstation,combine,kraken,wasteland")),
+        "$translucent": Value(Value("1")),
+    })),
+}
+UnlitGeneric {
+    basetexture: "overlays/no_entry",
+    remaining_properties: Table(Table({
+        "$edgesoftnessend": Value(Value("0.5")),
+        "%keywords": Value(Value("tf")),
+        "%compiletrigger": Value(Value("1")),
+        "$nodecal": Value(Value("1")),
+        "$distancealpha": Value(Value("1")),
+        "$outlinealpha": Value(Value("1")),
+        "$fadedistance": Value(Value("800")),
+        "$playerdistance": Value(Value("0")),
+        "$outlinecolor": Array(Array([ Value(Value("0")), Value(Value("0")), Value(Value("0")) ])),
+        "$outlineend0": Value(Value("0.8")),
+        "$distanceinverted": Value(Value("0")),
+        "$endalpha": Value(Value("0")),
+        "$teammatch": Value(Value("0")),
+        "$outline": Value(Value("1")),
+        "$translucent": Value(Value("1")),
+        "proxies": Table(Table({
+            "playerproximity": Table(Table({
+                "resultvar": Value(Value("$playerdistance")),
+                "scale": Value(Value("1")),
+            })),
+            "divide": Table(Table({
+                "srcvar2": Value(Value("$fadedistance")),
+                "resultvar": Value(Value("$endalpha")),
+                "srcvar1": Value(Value("$distanceinverted")),
+            })),
+            "subtract": Table(Table({
+                "srcvar2": Value(Value("$teammatch")),
+                "srcvar1": Value(Value("$one")),
+                "resultvar": Value(Value("$matchinverted")),
+            })),
+            "clamp": Table(Table({
+                "min": Value(Value("0")),
+                "max": Value(Value("$fadedistance")),
+                "srcvar1": Value(Value("$playerdistance")),
+                "resultvar": Value(Value("$distanceclamped")),
+            })),
+            "playerteammatch": Table(Table({ "resultvar": Value(Value("$teammatch")) })),
+            "multiply": Table(Table({
+                "resultvar": Value(Value("$alpha")),
+                "srcvar1": Value(Value("$endalpha")),
+                "srcvar2": Value(Value("$matchinverted")),
+            })),
+        })),
+        "$edgesoftnessstart": Value(Value("0.6")),
+        "$softedges": Value(Value("1")),
+        "$one": Value(Value("2")),
+        "$outlineend1": Value(Value("0.92")),
+        "$outlinestart0": Value(Value("0.4")),
+        "$distanceclamped": Value(Value("0")),
+        "$matchinverted": Value(Value("0")),
+        "$outlinestart1": Value(Value("0.52")),
+    })),
+}
+LightmappedGeneric {
+    basetexture: "construction/wood/constructwood002",
+    remaining_properties: Table(Table({
+        "$surfaceprop": Value(Value("wood")),
+        "%keywords": Value(Value("tf")),
+    })),
+}
+LightmappedGeneric {
+    basetexture: "japan/wood/japanese_bluewood01",
+    remaining_properties: Table(Table({
+        "$surfaceprop": Value(Value("wood")),
+        "%keywords": Value(Value("tf, pacific, japan")),
+    })),
+}
+LightmappedGeneric {
+    basetexture: "Tools/toolsareaportal",
+    remaining_properties: Table(Table({
+        "%compilenolight": Value(Value("1")),
+        "$translucent": Value(Value("1")),
+        "%keywords": Value(Value("airexchange,borealis,c17downtown,c17industrial,c17sewers,c17skyscraper,c17trainstation,combine,kraken,wasteland")),
+    })),
+}
+LightmappedGeneric {
+    basetexture: "Wood/wood_beam03",
+    remaining_properties: Table(Table({
+        "$surfaceprop": Value(Value("wood")),
+        "$detailblendmode": Value(Value("0")),
+        "%keywords": Value(Value("tf")),
+        "$detailscale": Value(Value("1")),
+        "$detailblendfactor": Value(Value("1")),
+        "$detail": Value(Value("overlays/detail006")),
+    })),
+}
+LightmappedGeneric {
+    basetexture: "pacific/wood/palm_wood02",
+    remaining_properties: Table(Table({
+        "$surfaceprop": Value(Value("wood")),
+        "$detail": Value(Value("overlays/detail006")),
+        "%keywords": Value(Value("tf, pacific")),
+        "$detailblendfactor": Value(Value("1")),
+        "$detailscale": Value(Value("1")),
+        "$detailblendmode": Value(Value("0")),
+    })),
+}
+LightmappedGeneric {
+    basetexture: "Tools/toolsblack",
+    remaining_properties: Table(Table({
+        "%keywords": Value(Value("airexchange,borealis,c17downtown,c17industrial,c17sewers,c17skyscraper,c17trainstation,combine,kraken,wasteland")),
+    })),
+}
+Patch {
+    include: "materials/WATER/WATER_WELL.vmt",
+    remaining_properties: Table(Table({
+        "replace": Table(Table({
+            "$envmap": Value(Value("maps/koth_suijin/c-672_-561_-134")),
+            "proxies": Table(Table({})),
+        })),
+    })),
+}
+Water {
+    normalmap: "water/tfwater001_normal",
+    remaining_properties: Table(Table({
+        "%compilewater": Value(Value("1")),
+        "$bottommaterial": Value(Value("water/water_well_beneath.vmt")),
+        "$scale": Array(Array([ Value(Value("1")), Value(Value("1")) ])),
+        "%tooltexture": Value(Value("dev/tfwater_normal")),
+        "$fogcolor": Array(Array([ Value(Value("24")), Value(Value("38")), Value(Value("53")) ])),
+        "<dx90": Table(Table({ "$fallbackmaterial": Value(Value("water/water_well_dx80")) })),
+        "$surfaceprop": Value(Value("water")),
+        "$abovewater": Value(Value("1")),
+        "$refractblur": Value(Value("0")),
+        "$refractamount": Value(Value("0.2")),
+        "$envmap": Value(Value("env_cubemap")),
+        "$curr": Value(Value("0")),
+        "%keywords": Value(Value("tf")),
+        "$temp": Array(Array([ Value(Value("0")), Value(Value("0")) ])),
+        "proxies": Table(Table({
+            "sine": Table(Table({
+                "resultvar": Value(Value("$curr2")),
+                "sinemin": Value(Value("0.5")),
+                "sineperiod": Value(Value("16")),
+                "sinemax": Value(Value("-0.5")),
+            })),
+            "waterlod": Table(Table({ "dummy": Value(Value("0")) })),
+            "animatedtexture": Table(Table({
+                "animatedtextureframenumvar": Value(Value("$bumpframe")),
+                "animatedtextureframerate": Value(Value("30")),
+                "animatedtexturevar": Value(Value("$normalmap")),
+            })),
+            "equals": Table(Table({
+                "srcvar1": Value(Value("$curr")),
+                "resultvar": Value(Value("$temp[1]")),
+            })),
+            "texturetransform": Table(Table({
+                "resultvar": Value(Value("$bumptransform")),
+                "translatevar": Value(Value("$temp")),
+            })),
+        })),
+        "$curr2": Value(Value("0")),
+        "$fogend": Value(Value("300")),
+        "$bumpframe": Value(Value("0")),
+        "$fogenable": Value(Value("1")),
+        "$fogstart": Value(Value("1")),
+        "$refracttexture": Value(Value("_rt_WaterRefraction")),
+    })),
+}
+Patch {
+    include: "materials/WATER/WATER_HYDRO_CHEAP.vmt",
+    remaining_properties: Table(Table({
+        "replace": Table(Table({
+            "proxies": Table(Table({})),
+            "$envmap": Value(Value("maps/koth_suijin/c-2309_-79_-795")),
+        })),
+    })),
+}
+LightmappedGeneric {
+    basetexture: "water/water_hydro_base",
+    remaining_properties: Table(Table({
+        "%compilewater": Value(Value("1")),
+        "$bottommaterial": Value(Value("water/water_well_beneath.vmt")),
+        "$surfaceprop": Value(Value("water")),
+        "$bumpmap": Value(Value("water/tfwater001_normal")),
+        "$bumpframe": Value(Value("0")),
+        "$normalmap": Value(Value("water/tfwater001_normal")),
+        "<dx90": Table(Table({
+            "$fallbackmaterial": Value(Value("water/water_hydro_cheap_dx80")),
+        })),
+        "$normalmapalphaenvmapmask": Value(Value("1")),
+        "%tooltexture": Value(Value("dev/tfwater_normal")),
+        "%keywords": Value(Value("tf")),
+        "$envmaptint": Array(Array([ Value(Value("0.2")), Value(Value("0.2")), Value(Value("0.2")) ])),
+        "$fogenable": Value(Value("1")),
+        "$fogstart": Value(Value("-100")),
+        "$abovewater": Value(Value("1")),
+        "$fogcolor": Array(Array([ Value(Value("51")), Value(Value("43")), Value(Value("13")) ])),
+        "$fogend": Value(Value("400")),
+        "$translucent": Value(Value("1")),
+        "%compilekeeplight": Value(Value("1")),
+        "proxies": Table(Table({
+            "animatedtexture": Table(Table({
+                "animatedtextureframenumvar": Value(Value("$bumpframe")),
+                "animatedtexturevar": Value(Value("$bumpmap")),
+                "animatedtextureframerate": Value(Value("30")),
+            })),
+        })),
+        "$envmap": Value(Value("env_cubemap")),
+    })),
+}
+Patch {
+    include: "materials/GLASS/GLASSWINDOW001A.vmt",
+    remaining_properties: Table(Table({
+        "replace": Table(Table({ "$envmap": Value(Value("maps/koth_suijin/c-1229_-453_167")) })),
+    })),
+}
+LightmappedGeneric {
+    basetexture: "glass/glasswindow001a",
+    remaining_properties: Table(Table({
+        "$envmaptint": Array(Array([ Value(Value("0.9")), Value(Value("0.9")), Value(Value("0.9")) ])),
+        "$envmap": Value(Value("env_cubemap")),
+        "$basetexturetransform": Value(Value("center .5 .5 scale 4 4 rotate 45 translate 0 0")),
+        "$translucent": Value(Value("1")),
+        "$surfaceprop": Value(Value("glass")),
+        "%keywords": Value(Value("tf")),
+        "$envmapcontrast": Value(Value("0.5")),
+    })),
+}
+Patch {
+    include: "materials/GLASS/GLASSWINDOW001A.vmt",
+    remaining_properties: Table(Table({
+        "replace": Table(Table({ "$envmap": Value(Value("maps/koth_suijin/c-1200_0_1")) })),
+    })),
+}
+LightmappedGeneric {
+    basetexture: "glass/glasswindow001a",
+    remaining_properties: Table(Table({
+        "$surfaceprop": Value(Value("glass")),
+        "$envmap": Value(Value("env_cubemap")),
+        "$envmapcontrast": Value(Value("0.5")),
+        "$envmaptint": Array(Array([ Value(Value("0.9")), Value(Value("0.9")), Value(Value("0.9")) ])),
+        "%keywords": Value(Value("tf")),
+        "$translucent": Value(Value("1")),
+        "$basetexturetransform": Value(Value("center .5 .5 scale 4 4 rotate 45 translate 0 0")),
+    })),
+}
+Patch {
+    include: "materials/GLASS/GLASSWINDOW001A.vmt",
+    remaining_properties: Table(Table({
+        "replace": Table(Table({ "$envmap": Value(Value("maps/koth_suijin/c-1229_453_167")) })),
+    })),
+}
+LightmappedGeneric {
+    basetexture: "glass/glasswindow001a",
+    remaining_properties: Table(Table({
+        "$envmap": Value(Value("env_cubemap")),
+        "$translucent": Value(Value("1")),
+        "%keywords": Value(Value("tf")),
+        "$envmaptint": Array(Array([ Value(Value("0.9")), Value(Value("0.9")), Value(Value("0.9")) ])),
+        "$envmapcontrast": Value(Value("0.5")),
+        "$basetexturetransform": Value(Value("center .5 .5 scale 4 4 rotate 45 translate 0 0")),
+        "$surfaceprop": Value(Value("glass")),
+    })),
+}
+Water {
+    normalmap: "water/tfwater001_normal",
+    remaining_properties: Table(Table({
+        "<dx90": Table(Table({
+            "$fallbackmaterial": Value(Value("water/water_well_beneath_dx80")),
+        })),
+        "$bumpframe": Value(Value("0")),
+        "$refractamount": Value(Value("0.2")),
+        "%tooltexture": Value(Value("dev/water_normal")),
+        "water_dx60": Table(Table({ "$fallbackmaterial": Value(Value("nature/water_dx70_beneath")) })),
+        "$fogcolor": Array(Array([ Value(Value("24")), Value(Value("38")), Value(Value("53")) ])),
+        "$fogstart": Value(Value("-350")),
+        "$cheapwaterstartdistance": Value(Value("500")),
+        "$reflecttint": Array(Array([ Value(Value("1")), Value(Value("1")), Value(Value("1")) ])),
+        "$forceexpensive": Value(Value("1")),
+        "$refracttint": Array(Array([ Value(Value("0.95")), Value(Value("1")), Value(Value("0.97")) ])),
+        "$refracttexture": Value(Value("_rt_WaterRefraction")),
+        "$abovewater": Value(Value("0")),
+        "$reflectamount": Value(Value("1")),
+        "$blurrefract": Value(Value("1")),
+        "$cheapwaterenddistance": Value(Value("1000")),
+        "%compilewater": Value(Value("1")),
+        "$underwateroverlay": Value(Value("effects/water_warp_well")),
+        "$scale": Array(Array([ Value(Value("1")), Value(Value("1")) ])),
+        "%keywords": Value(Value("tf")),
+        "$fogend": Value(Value("1550")),
+        "proxies": Table(Table({
+            "animatedtexture": Table(Table({
+                "animatedtextureframerate": Value(Value("30")),
+                "animatedtexturevar": Value(Value("$normalmap")),
+                "animatedtextureframenumvar": Value(Value("$bumpframe")),
+            })),
+            "waterlod": Table(Table({})),
+            "texturescroll": Table(Table({
+                "texturescrollvar": Value(Value("$bumptransform")),
+                "texturescrollangle": Value(Value("45")),
+                "texturescrollrate": Value(Value("0.05")),
+            })),
+        })),
+        "$surfaceprop": Value(Value("water")),
+        "$fogenable": Value(Value("1")),
+    })),
+}
+LightmappedGeneric {
+    basetexture: "Overlays/patch002",
+    remaining_properties: Table(Table({
+        "$decal": Value(Value("1")),
+        "$alpha": Value(Value("0.5")),
+        "$vertexcolor": Value(Value("1")),
+        "$translucent": Value(Value("1")),
+        "$vertexalpha": Value(Value("1")),
+        "%keywords": Value(Value("tf")),
+        "$decalscale": Value(Value("0.25")),
+    })),
+}
+LightmappedGeneric {
+    basetexture: "japan/signs/kanji_blue01",
+    remaining_properties: Table(Table({
+        "$decalscale": Value(Value("0.25")),
+        "$vertexcolor": Value(Value("1")),
+        "$vertexalpha": Value(Value("1")),
+        "$decal": Value(Value("1")),
+        "%keywords": Value(Value("tf, japan")),
+        "$translucent": Value(Value("1")),
+    })),
+}
+LightmappedGeneric {
+    basetexture: "overlays/Stain016",
+    remaining_properties: Table(Table({
+        "%keywords": Value(Value("tf")),
+        "$decal": Value(Value("1")),
+        "$translucent": Value(Value("1")),
+        "$vertexalpha": Value(Value("1")),
+        "$vertexcolor": Value(Value("1")),
+    })),
+}
+LightmappedGeneric {
+    basetexture: "japan/sakura_petals03",
+    remaining_properties: Table(Table({
+        "$decal": Value(Value("1")),
+        "$decalscale": Value(Value("0.25")),
+        "$translucent": Value(Value("1")),
+        "%keywords": Value(Value("tf, japan")),
+        "$vertexalpha": Value(Value("1")),
+        "$vertexcolor": Value(Value("1")),
+    })),
+}
+LightmappedGeneric {
+    basetexture: "japan/signs/kanji_red01",
+    remaining_properties: Table(Table({
+        "%keywords": Value(Value("tf, japan")),
+        "$vertexalpha": Value(Value("1")),
+        "$decalscale": Value(Value("0.25")),
+        "$vertexcolor": Value(Value("1")),
+        "$translucent": Value(Value("1")),
+        "$decal": Value(Value("1")),
+    })),
+}
+LightmappedGeneric {
+    basetexture: "Overlays/patch009",
+    remaining_properties: Table(Table({
+        "$decalscale": Value(Value("0.25")),
+        "$translucent": Value(Value("1")),
+        "$vertexcolor": Value(Value("1")),
+        "%keywords": Value(Value("tf")),
+        "$alpha": Value(Value("0.5")),
+        "$decal": Value(Value("1")),
+        "$vertexalpha": Value(Value("1")),
+    })),
+}
+LightmappedGeneric {
+    basetexture: "japan/signs/kanji_suijin01",
+    remaining_properties: Table(Table({
+        "$decal": Value(Value("1")),
+        "$decalscale": Value(Value("0.25")),
+        "$vertexcolor": Value(Value("1")),
+        "$translucent": Value(Value("1")),
+        "%keywords": Value(Value("tf, japan")),
+        "$vertexalpha": Value(Value("1")),
+    })),
+}
+LightmappedGeneric {
+    basetexture: "Overlays/patch001",
+    remaining_properties: Table(Table({
+        "$alpha": Value(Value("0.5")),
+        "$translucent": Value(Value("1")),
+        "$decalscale": Value(Value("0.25")),
+        "$vertexalpha": Value(Value("1")),
+        "$decal": Value(Value("1")),
+        "$vertexcolor": Value(Value("1")),
+        "%keywords": Value(Value("tf")),
+    })),
+}
+VertexLitGeneric {
+    basetexture: "Models/props_lights/lights",
+    remaining_properties: Table(Table({
+        "$selfillum": Value(Value("1")),
+        "$model": Value(Value("1")),
+        "$alpha": Value(Value("1")),
+    })),
+}
+VertexLitGeneric {
+    basetexture: "models\\props_japan\\kawara_roof_tile01",
+    remaining_properties: Table(Table({})),
+}
+VertexLitGeneric {
+    basetexture: "models\\props_japan\\kawara_roof_tile02",
+    remaining_properties: Table(Table({})),
+}
+VertexLitGeneric {
+    basetexture: "models\\props_japan\\kawara_roof_tile03",
+    remaining_properties: Table(Table({})),
+}
+VertexLitGeneric {
+    basetexture: "models\\props_japan\\kawara_roof_tile01",
+    remaining_properties: Table(Table({})),
+}
+VertexLitGeneric {
+    basetexture: "models\\props_japan\\kawara_roof_tile02",
+    remaining_properties: Table(Table({})),
+}
+VertexLitGeneric {
+    basetexture: "models\\props_japan\\kawara_roof_tile03",
+    remaining_properties: Table(Table({})),
+}
+VertexLitGeneric {
+    basetexture: "models\\props_japan\\kawara_roof_tile01",
+    remaining_properties: Table(Table({})),
+}
+VertexLitGeneric {
+    basetexture: "models\\props_japan\\kawara_roof_tile02",
+    remaining_properties: Table(Table({})),
+}
+VertexLitGeneric {
+    basetexture: "models\\props_japan\\kawara_roof_tile03",
+    remaining_properties: Table(Table({})),
+}
+VertexLitGeneric {
+    basetexture: "models\\props_japan\\kawara_roof_supports01",
+    remaining_properties: Table(Table({})),
+}
+VertexLitGeneric {
+    basetexture: "models\\props_japan\\kawara_roof_supports01",
+    remaining_properties: Table(Table({})),
+}
+VertexLitGeneric {
+    basetexture: "models\\props_japan\\kawara_roof_supports01",
+    remaining_properties: Table(Table({})),
+}
+VertexLitGeneric {
+    basetexture: "models\\props_japan\\kawara_roof_tile01",
+    remaining_properties: Table(Table({})),
+}
+VertexLitGeneric {
+    basetexture: "models\\props_japan\\kawara_roof_tile02",
+    remaining_properties: Table(Table({})),
+}
+VertexLitGeneric {
+    basetexture: "models\\props_japan\\kawara_roof_tile03",
+    remaining_properties: Table(Table({})),
+}
+VertexLitGeneric {
+    basetexture: "models/props_japan/katana_stand01",
+    remaining_properties: Table(Table({
+        "$model": Value(Value("1")),
+        "$surfaceprop": Value(Value("wood")),
+    })),
+}
+VertexLitGeneric {
+    basetexture: "models\\props_japan\\kawara_roof_tile01",
+    remaining_properties: Table(Table({})),
+}
+VertexLitGeneric {
+    basetexture: "models\\props_japan\\kawara_roof_tile02",
+    remaining_properties: Table(Table({})),
+}
+VertexLitGeneric {
+    basetexture: "models\\props_japan\\kawara_roof_tile03",
+    remaining_properties: Table(Table({})),
+}
+VertexLitGeneric {
+    basetexture: "models/props_japan/gong01",
+    remaining_properties: Table(Table({
+        "$phongtint": Array(Array([
+            Value(Value("0.45")),
+            Value(Value("0.34")),
+            Value(Value("0.17")),
+        ])),
+        "$surfaceprop": Value(Value("metal")),
+        "$phong": Value(Value("1")),
+        "$rimlight": Value(Value("1")),
+        "$bumpmapalphaphongmask": Value(Value("0")),
+        "$phongexponent": Value(Value("4")),
+        "$ssbump": Value(Value("1")),
+        "$phongfresnelranges": Array(Array([ Value(Value("0.25")), Value(Value("0.5")), Value(Value("1")) ])),
+        "$bumpmap": Value(Value("models/props_japan/gong01_ssbump")),
+        "$rimlightboost": Value(Value("0.5")),
+        "$rimlightexponent": Value(Value("2")),
+        "$lightwarptexture": Value(Value("models/lightwarps/robot_lightwarp")),
+        "$model": Value(Value("1")),
+        "$phongboost": Value(Value("2")),
+    })),
+}
+VertexLitGeneric {
+    basetexture: "models\\props_japan\\shoji_wall_screen01",
+    remaining_properties: Table(Table({})),
+}
+VertexLitGeneric {
+    basetexture: "models\\props_japan\\kawara_roof_tile01",
+    remaining_properties: Table(Table({})),
+}
+VertexLitGeneric {
+    basetexture: "models\\props_japan\\kawara_roof_tile02",
+    remaining_properties: Table(Table({})),
+}
+VertexLitGeneric {
+    basetexture: "models\\props_japan\\kawara_roof_tile03",
+    remaining_properties: Table(Table({})),
+}
+VertexLitGeneric {
+    basetexture: "models\\props_japan\\kawara_roof_supports01",
+    remaining_properties: Table(Table({})),
+}
+VertexLitGeneric {
+    basetexture: "models\\props_japan\\kawara_roof_tile01",
+    remaining_properties: Table(Table({})),
+}
+VertexLitGeneric {
+    basetexture: "models\\props_japan\\kawara_roof_tile02",
+    remaining_properties: Table(Table({})),
+}
+VertexLitGeneric {
+    basetexture: "models\\props_japan\\kawara_roof_supports01",
+    remaining_properties: Table(Table({})),
+}
+VertexLitGeneric {
+    basetexture: "models\\props_japan\\kawara_roof_supports01",
+    remaining_properties: Table(Table({})),
+}
+VertexLitGeneric {
+    basetexture: "models\\props_japan\\kawara_roof_tile01",
+    remaining_properties: Table(Table({})),
+}
+VertexLitGeneric {
+    basetexture: "models\\props_japan\\kawara_roof_tile02",
+    remaining_properties: Table(Table({})),
+}
+VertexLitGeneric {
+    basetexture: "models\\props_japan\\kawara_roof_tile03",
+    remaining_properties: Table(Table({})),
+}
+VertexLitGeneric {
+    basetexture: "models\\props_japan\\goshintou_lantern01",
+    remaining_properties: Table(Table({ "$selfillum": Value(Value("1")) })),
+}
+VertexLitGeneric {
+    basetexture: "models\\props_japan\\goshintou_lantern02",
+    remaining_properties: Table(Table({ "$selfillum": Value(Value("1")) })),
+}
+VertexLitGeneric {
+    basetexture: "models\\props_japan\\goshintou_lantern03",
+    remaining_properties: Table(Table({ "$selfillum": Value(Value("1")) })),
+}
+VertexLitGeneric {
+    basetexture: "models\\props_japan\\goshintou_lantern04",
+    remaining_properties: Table(Table({ "$selfillum": Value(Value("1")) })),
+}
+VertexLitGeneric {
+    basetexture: "models\\props_japan\\goshintou_lantern05",
+    remaining_properties: Table(Table({ "$selfillum": Value(Value("1")) })),
+}
+VertexLitGeneric {
+    basetexture: "models\\props_japan\\goshintou_lantern06",
+    remaining_properties: Table(Table({ "$selfillum": Value(Value("1")) })),
+}
+VertexLitGeneric {
+    basetexture: "models\\props_japan\\kawara_roof_tile01",
+    remaining_properties: Table(Table({})),
+}
+VertexLitGeneric {
+    basetexture: "models\\props_japan\\kawara_roof_tile02",
+    remaining_properties: Table(Table({})),
+}
+VertexLitGeneric {
+    basetexture: "models\\props_japan\\kawara_roof_tile03",
+    remaining_properties: Table(Table({})),
+}
+VertexLitGeneric {
+    basetexture: "models\\props_japan\\kawara_roof_supports01",
+    remaining_properties: Table(Table({})),
+}
+VertexLitGeneric {
+    basetexture: "models\\props_japan\\kawara_roof_tile01",
+    remaining_properties: Table(Table({})),
+}
+VertexLitGeneric {
+    basetexture: "models\\props_japan\\kawara_roof_tile02",
+    remaining_properties: Table(Table({})),
+}
+VertexLitGeneric {
+    basetexture: "models\\props_japan\\kawara_roof_tile03",
+    remaining_properties: Table(Table({})),
+}
+VertexLitGeneric {
+    basetexture: "models\\props_japan\\kawara_roof_tile03",
+    remaining_properties: Table(Table({})),
+}
+VertexLitGeneric {
+    basetexture: "models\\props_japan\\kawara_roof_supports01",
+    remaining_properties: Table(Table({})),
+}
+VertexLitGeneric {
+    basetexture: "models\\props_japan\\kawara_roof_tile03",
+    remaining_properties: Table(Table({})),
+}
+VertexLitGeneric {
+    basetexture: "models/props_japan//japanese_bridge02",
+    remaining_properties: Table(Table({
+        "$model": Value(Value("1")),
+        "$surfaceprop": Value(Value("wood")),
+    })),
+}
+VertexLitGeneric {
+    basetexture: "models\\props_japan\\andon_post_lantern01",
+    remaining_properties: Table(Table({ "$selfillum": Value(Value("1")) })),
+}
+VertexLitGeneric {
+    basetexture: "models\\props_japan\\andon_post_lantern02",
+    remaining_properties: Table(Table({ "$selfillum": Value(Value("1")) })),
+}
+VertexLitGeneric {
+    basetexture: "models\\props_japan\\hanging_rope_lanterns01",
+    remaining_properties: Table(Table({ "$selfillum": Value(Value("1")) })),
+}
+VertexLitGeneric {
+    basetexture: "models\\props_japan\\hanging_rope_lanterns02",
+    remaining_properties: Table(Table({ "$selfillum": Value(Value("1")) })),
+}
+UnlitGeneric {
+    basetexture: "Models/props_foliage/tree_pine01",
+    remaining_properties: Table(Table({
+        "$alphatest": Value(Value("1")),
+        "$translucent": Value(Value("1")),
+        "$color2": Array(Array([
+            Value(Value("0.23")),
+            Value(Value("0.25")),
+            Value(Value("0.3")),
+        ])),
+    })),
+}
+UnlitGeneric {
+    basetexture: "Models/props_foliage/tree_pine01",
+    remaining_properties: Table(Table({
+        "$translucent": Value(Value("1")),
+        "$nofog": Value(Value("1")),
+        "$color2": Array(Array([
+            Value(Value("0.37")),
+            Value(Value("0.37")),
+            Value(Value("0.46")),
+        ])),
+        "$alphatest": Value(Value("1")),
+    })),
+}
+UnlitGeneric {
+    basetexture: "Models/props_foliage/tree_pine01",
+    remaining_properties: Table(Table({
+        "$translucent": Value(Value("1")),
+        "$color2": Array(Array([
+            Value(Value("0.46")),
+            Value(Value("0.46")),
+            Value(Value("0.64")),
+        ])),
+        "$nofog": Value(Value("1")),
+        "$alphatest": Value(Value("1")),
+    })),
+}
+UnlitGeneric {
+    basetexture: "Models/props_foliage/tree_pine01",
+    remaining_properties: Table(Table({
+        "$translucent": Value(Value("1")),
+        "$nofog": Value(Value("1")),
+        "$alphatest": Value(Value("1")),
+        "$color2": Array(Array([
+            Value(Value("0.55")),
+            Value(Value("0.56")),
+            Value(Value("0.7")),
+        ])),
+    })),
+}
+UnlitGeneric {
+    basetexture: "Models/props_foliage/tree_pine01",
+    remaining_properties: Table(Table({
+        "$color2": Array(Array([
+            Value(Value("0.16")),
+            Value(Value("0.18")),
+            Value(Value("0.16")),
+        ])),
+        "$alphatest": Value(Value("1")),
+        "$translucent": Value(Value("1")),
+    })),
+}
+UnlitGeneric {
+    basetexture: "Models/props_foliage/tree_pine01",
+    remaining_properties: Table(Table({
+        "$alphatest": Value(Value("1")),
+        "$nofog": Value(Value("1")),
+        "$color2": Array(Array([
+            Value(Value("0.21")),
+            Value(Value("0.24")),
+            Value(Value("0.25")),
+        ])),
+        "$translucent": Value(Value("1")),
+    })),
+}
+UnlitGeneric {
+    basetexture: "Models/props_foliage/tree_pine01",
+    remaining_properties: Table(Table({
+        "$color2": Array(Array([
+            Value(Value("0.27")),
+            Value(Value("0.3")),
+            Value(Value("0.32")),
+        ])),
+        "$translucent": Value(Value("1")),
+        "$nofog": Value(Value("1")),
+        "$alphatest": Value(Value("1")),
+    })),
+}
+UnlitGeneric {
+    basetexture: "Models/props_foliage/tree_pine01",
+    remaining_properties: Table(Table({
+        "$nofog": Value(Value("1")),
+        "$alphatest": Value(Value("1")),
+        "$color2": Array(Array([
+            Value(Value("0.3")),
+            Value(Value("0.32")),
+            Value(Value("0.35")),
+        ])),
+        "$translucent": Value(Value("1")),
+    })),
+}
+UnlitGeneric {
+    basetexture: "Models/props_foliage/tree_pine01",
+    remaining_properties: Table(Table({
+        "$translucent": Value(Value("1")),
+        "$color2": Array(Array([
+            Value(Value("0.21")),
+            Value(Value("0.18")),
+            Value(Value("0.21")),
+        ])),
+        "$alphatest": Value(Value("1")),
+        "$nofog": Value(Value("1")),
+    })),
+}
+UnlitGeneric {
+    basetexture: "Models/props_foliage/tree_pine01",
+    remaining_properties: Table(Table({
+        "$nofog": Value(Value("1")),
+        "$translucent": Value(Value("1")),
+        "$color2": Array(Array([
+            Value(Value("0.33")),
+            Value(Value("0.28")),
+            Value(Value("0.35")),
+        ])),
+        "$alphatest": Value(Value("1")),
+    })),
+}
+UnlitGeneric {
+    basetexture: "Models/props_foliage/tree_pine01",
+    remaining_properties: Table(Table({
+        "$nofog": Value(Value("1")),
+        "$translucent": Value(Value("1")),
+        "$color2": Array(Array([
+            Value(Value("0.4")),
+            Value(Value("0.33")),
+            Value(Value("0.42")),
+        ])),
+        "$alphatest": Value(Value("1")),
+    })),
+}
+UnlitGeneric {
+    basetexture: "Models/props_foliage/tree_pine01",
+    remaining_properties: Table(Table({
+        "$translucent": Value(Value("1")),
+        "$color2": Array(Array([
+            Value(Value("0.55")),
+            Value(Value("0.44")),
+            Value(Value("0.58")),
+        ])),
+        "$nofog": Value(Value("1")),
+        "$alphatest": Value(Value("1")),
+    })),
+}
+UnlitGeneric {
+    basetexture: "Models/props_foliage/tree_pine01",
+    remaining_properties: Table(Table({
+        "$alphatest": Value(Value("1")),
+        "$translucent": Value(Value("1")),
+        "$color2": Array(Array([ Value(Value("0")), Value(Value("0")), Value(Value("0")) ])),
+    })),
+}
+UnlitGeneric {
+    basetexture: "Models/props_foliage/tree_pine01",
+    remaining_properties: Table(Table({
+        "$alphatest": Value(Value("1")),
+        "$color2": Array(Array([
+            Value(Value("0.23")),
+            Value(Value("0.25")),
+            Value(Value("0.3")),
+        ])),
+        "$translucent": Value(Value("1")),
+    })),
+}
+UnlitGeneric {
+    basetexture: "Models/props_foliage/tree_pine01",
+    remaining_properties: Table(Table({
+        "$translucent": Value(Value("1")),
+        "$alphatest": Value(Value("1")),
+        "$color2": Array(Array([
+            Value(Value("0.37")),
+            Value(Value("0.37")),
+            Value(Value("0.46")),
+        ])),
+        "$nofog": Value(Value("1")),
+    })),
+}
+UnlitGeneric {
+    basetexture: "Models/props_foliage/tree_pine01",
+    remaining_properties: Table(Table({
+        "$nofog": Value(Value("1")),
+        "$translucent": Value(Value("1")),
+        "$color2": Array(Array([
+            Value(Value("0.46")),
+            Value(Value("0.46")),
+            Value(Value("0.64")),
+        ])),
+        "$alphatest": Value(Value("1")),
+    })),
+}
+UnlitGeneric {
+    basetexture: "Models/props_foliage/tree_pine01",
+    remaining_properties: Table(Table({
+        "$nofog": Value(Value("1")),
+        "$color2": Array(Array([
+            Value(Value("0.55")),
+            Value(Value("0.56")),
+            Value(Value("0.7")),
+        ])),
+        "$translucent": Value(Value("1")),
+        "$alphatest": Value(Value("1")),
+    })),
+}
+UnlitGeneric {
+    basetexture: "Models/props_foliage/tree_pine01",
+    remaining_properties: Table(Table({
+        "$alphatest": Value(Value("1")),
+        "$translucent": Value(Value("1")),
+        "$color2": Array(Array([
+            Value(Value("0.16")),
+            Value(Value("0.18")),
+            Value(Value("0.16")),
+        ])),
+    })),
+}
+UnlitGeneric {
+    basetexture: "Models/props_foliage/tree_pine01",
+    remaining_properties: Table(Table({
+        "$color2": Array(Array([
+            Value(Value("0.21")),
+            Value(Value("0.24")),
+            Value(Value("0.25")),
+        ])),
+        "$nofog": Value(Value("1")),
+        "$translucent": Value(Value("1")),
+        "$alphatest": Value(Value("1")),
+    })),
+}
+UnlitGeneric {
+    basetexture: "Models/props_foliage/tree_pine01",
+    remaining_properties: Table(Table({
+        "$nofog": Value(Value("1")),
+        "$translucent": Value(Value("1")),
+        "$color2": Array(Array([
+            Value(Value("0.27")),
+            Value(Value("0.3")),
+            Value(Value("0.32")),
+        ])),
+        "$alphatest": Value(Value("1")),
+    })),
+}
+UnlitGeneric {
+    basetexture: "Models/props_foliage/tree_pine01",
+    remaining_properties: Table(Table({
+        "$nofog": Value(Value("1")),
+        "$alphatest": Value(Value("1")),
+        "$color2": Array(Array([
+            Value(Value("0.3")),
+            Value(Value("0.32")),
+            Value(Value("0.35")),
+        ])),
+        "$translucent": Value(Value("1")),
+    })),
+}
+UnlitGeneric {
+    basetexture: "Models/props_foliage/tree_pine01",
+    remaining_properties: Table(Table({
+        "$color2": Array(Array([
+            Value(Value("0.21")),
+            Value(Value("0.18")),
+            Value(Value("0.21")),
+        ])),
+        "$alphatest": Value(Value("1")),
+        "$nofog": Value(Value("1")),
+        "$translucent": Value(Value("1")),
+    })),
+}
+UnlitGeneric {
+    basetexture: "Models/props_foliage/tree_pine01",
+    remaining_properties: Table(Table({
+        "$translucent": Value(Value("1")),
+        "$alphatest": Value(Value("1")),
+        "$color2": Array(Array([
+            Value(Value("0.33")),
+            Value(Value("0.28")),
+            Value(Value("0.35")),
+        ])),
+        "$nofog": Value(Value("1")),
+    })),
+}
+UnlitGeneric {
+    basetexture: "Models/props_foliage/tree_pine01",
+    remaining_properties: Table(Table({
+        "$color2": Array(Array([
+            Value(Value("0.4")),
+            Value(Value("0.33")),
+            Value(Value("0.42")),
+        ])),
+        "$nofog": Value(Value("1")),
+        "$translucent": Value(Value("1")),
+        "$alphatest": Value(Value("1")),
+    })),
+}
+UnlitGeneric {
+    basetexture: "Models/props_foliage/tree_pine01",
+    remaining_properties: Table(Table({
+        "$color2": Array(Array([
+            Value(Value("0.55")),
+            Value(Value("0.44")),
+            Value(Value("0.58")),
+        ])),
+        "$translucent": Value(Value("1")),
+        "$nofog": Value(Value("1")),
+        "$alphatest": Value(Value("1")),
+    })),
+}
+UnlitGeneric {
+    basetexture: "Models/props_foliage/tree_pine01",
+    remaining_properties: Table(Table({
+        "$alphatest": Value(Value("1")),
+        "$translucent": Value(Value("1")),
+        "$color2": Array(Array([ Value(Value("0")), Value(Value("0")), Value(Value("0")) ])),
+    })),
+}
+VertexLitGeneric {
+    basetexture: "Models/props_swamp/rock001_swamp",
+    remaining_properties: Table(Table({
+        "$detail": Value(Value("overlays/detail004")),
+        "$surfaceprop": Value(Value("dirt")),
+        "$detailblendfactor": Value(Value("1.4")),
+        "$detailscale": Value(Value("3.2")),
+        "$detailblendmode": Value(Value("0")),
+    })),
+}
+VertexLitGeneric {
+    basetexture: "Models/props_swamp/rock001b_swamp",
+    remaining_properties: Table(Table({
+        "$detailblendmode": Value(Value("0")),
+        "$detailscale": Value(Value("3.2")),
+        "$surfaceprop": Value(Value("dirt")),
+        "$detail": Value(Value("overlays/detail004")),
+        "$detailblendfactor": Value(Value("1.4")),
+    })),
+}
+VertexLitGeneric {
+    basetexture: "Models/props_mining/rock001",
+    remaining_properties: Table(Table({
+        "$detailblendmode": Value(Value("0")),
+        "$detailscale": Value(Value("3.2")),
+        "$detailblendfactor": Value(Value("1.4")),
+        "$detail": Value(Value("overlays/detail004")),
+        "$surfaceprop": Value(Value("dirt")),
+    })),
+}
+VertexLitGeneric {
+    basetexture: "Models/props_mining/rock001a",
+    remaining_properties: Table(Table({
+        "$detailblendfactor": Value(Value("1.4")),
+        "$detail": Value(Value("overlays/detail004")),
+        "$detailscale": Value(Value("3.2")),
+        "$detailblendmode": Value(Value("0")),
+        "$surfaceprop": Value(Value("dirt")),
+    })),
+}
+VertexLitGeneric {
+    basetexture: "Models/props_mining/rock001b",
+    remaining_properties: Table(Table({
+        "$detailblendfactor": Value(Value("1.4")),
+        "$detail": Value(Value("overlays/detail004")),
+        "$detailscale": Value(Value("3.2")),
+        "$detailblendmode": Value(Value("0")),
+        "$surfaceprop": Value(Value("dirt")),
+    })),
+}
+VertexLitGeneric {
+    basetexture: "Models/props_mining/rock001c",
+    remaining_properties: Table(Table({
+        "$surfaceprop": Value(Value("dirt")),
+        "$detailblendfactor": Value(Value("1.4")),
+        "$detailscale": Value(Value("3.2")),
+        "$detail": Value(Value("overlays/detail004")),
+        "$detailblendmode": Value(Value("0")),
+    })),
+}
+VertexLitGeneric {
+    basetexture: "Models/props_swamp/rock007_swamp",
+    remaining_properties: Table(Table({
+        "$detailscale": Value(Value("3.2")),
+        "$detailblendmode": Value(Value("0")),
+        "$detail": Value(Value("overlays/detail004")),
+        "$surfaceprop": Value(Value("dirt")),
+        "$detailblendfactor": Value(Value("1.4")),
+    })),
+}
+VertexLitGeneric {
+    basetexture: "Models/props_swamp/rock007b_swamp",
+    remaining_properties: Table(Table({
+        "$surfaceprop": Value(Value("dirt")),
+        "$detailscale": Value(Value("3.2")),
+        "$detailblendfactor": Value(Value("1.4")),
+        "$detailblendmode": Value(Value("0")),
+        "$detail": Value(Value("overlays/detail004")),
+    })),
+}
+VertexLitGeneric {
+    basetexture: "Models/props_mining/rock007",
+    remaining_properties: Table(Table({
+        "$detail": Value(Value("overlays/detail004")),
+        "$detailblendfactor": Value(Value("1.4")),
+        "$detailblendmode": Value(Value("0")),
+        "$detailscale": Value(Value("3.2")),
+        "$surfaceprop": Value(Value("dirt")),
+    })),
+}
+VertexLitGeneric {
+    basetexture: "Models/props_mining/rock007a",
+    remaining_properties: Table(Table({
+        "$detailblendfactor": Value(Value("1.4")),
+        "$detailscale": Value(Value("3.2")),
+        "$detail": Value(Value("overlays/detail004")),
+        "$detailblendmode": Value(Value("0")),
+        "$surfaceprop": Value(Value("dirt")),
+    })),
+}
+VertexLitGeneric {
+    basetexture: "Models/props_mining/rock007b",
+    remaining_properties: Table(Table({
+        "$surfaceprop": Value(Value("dirt")),
+        "$detailscale": Value(Value("3.2")),
+        "$detailblendfactor": Value(Value("1.4")),
+        "$detail": Value(Value("overlays/detail004")),
+        "$detailblendmode": Value(Value("0")),
+    })),
+}
+VertexLitGeneric {
+    basetexture: "Models/props_mining/rock007c",
+    remaining_properties: Table(Table({
+        "$detailblendfactor": Value(Value("1.4")),
+        "$detail": Value(Value("overlays/detail004")),
+        "$detailscale": Value(Value("3.2")),
+        "$detailblendmode": Value(Value("0")),
+        "$surfaceprop": Value(Value("dirt")),
+    })),
+}
+VertexLitGeneric {
+    basetexture: "Models/props_swamp/rock003_swamp",
+    remaining_properties: Table(Table({
+        "$detailscale": Value(Value("3.2")),
+        "$detailblendfactor": Value(Value("1.4")),
+        "$detail": Value(Value("overlays/detail004")),
+        "$surfaceprop": Value(Value("dirt")),
+        "$detailblendmode": Value(Value("0")),
+    })),
+}
+VertexLitGeneric {
+    basetexture: "Models/props_swamp/rock003b_swamp",
+    remaining_properties: Table(Table({
+        "$detailblendmode": Value(Value("0")),
+        "$detailscale": Value(Value("3.2")),
+        "$surfaceprop": Value(Value("dirt")),
+        "$detail": Value(Value("overlays/detail004")),
+        "$detailblendfactor": Value(Value("1.4")),
+    })),
+}
+VertexLitGeneric {
+    basetexture: "Models/props_mining/rock003",
+    remaining_properties: Table(Table({
+        "$detailscale": Value(Value("3.2")),
+        "$detailblendmode": Value(Value("0")),
+        "$detail": Value(Value("overlays/detail004")),
+        "$detailblendfactor": Value(Value("1.4")),
+        "$surfaceprop": Value(Value("dirt")),
+    })),
+}
+VertexLitGeneric {
+    basetexture: "Models/props_mining/rock003a",
+    remaining_properties: Table(Table({
+        "$detailblendfactor": Value(Value("1.4")),
+        "$detailscale": Value(Value("3.2")),
+        "$detailblendmode": Value(Value("0")),
+        "$surfaceprop": Value(Value("dirt")),
+        "$detail": Value(Value("overlays/detail004")),
+    })),
+}
+VertexLitGeneric {
+    basetexture: "Models/props_mining/rock003b",
+    remaining_properties: Table(Table({
+        "$detail": Value(Value("overlays/detail004")),
+        "$detailblendfactor": Value(Value("1.4")),
+        "$detailscale": Value(Value("3.2")),
+        "$surfaceprop": Value(Value("dirt")),
+        "$detailblendmode": Value(Value("0")),
+    })),
+}
+VertexLitGeneric {
+    basetexture: "Models/props_mining/rock003c",
+    remaining_properties: Table(Table({
+        "$detailscale": Value(Value("3.2")),
+        "$surfaceprop": Value(Value("dirt")),
+        "$detailblendfactor": Value(Value("1.4")),
+        "$detailblendmode": Value(Value("0")),
+        "$detail": Value(Value("overlays/detail004")),
+    })),
+}
+VertexLitGeneric {
+    basetexture: "Models/props_swamp/rock005_swamp",
+    remaining_properties: Table(Table({
+        "$detail": Value(Value("overlays/detail004")),
+        "$detailblendmode": Value(Value("0")),
+        "$surfaceprop": Value(Value("dirt")),
+        "$detailscale": Value(Value("3.2")),
+        "$detailblendfactor": Value(Value("1.4")),
+    })),
+}
+VertexLitGeneric {
+    basetexture: "Models/props_swamp/rock005b_swamp",
+    remaining_properties: Table(Table({
+        "$detailblendfactor": Value(Value("1.4")),
+        "$detailblendmode": Value(Value("0")),
+        "$surfaceprop": Value(Value("dirt")),
+        "$detail": Value(Value("overlays/detail004")),
+        "$detailscale": Value(Value("3.2")),
+    })),
+}
+VertexLitGeneric {
+    basetexture: "Models/props_mining/rock005",
+    remaining_properties: Table(Table({
+        "$detailblendfactor": Value(Value("1.4")),
+        "$surfaceprop": Value(Value("dirt")),
+        "$detailblendmode": Value(Value("0")),
+        "$detailscale": Value(Value("3.2")),
+        "$detail": Value(Value("overlays/detail004")),
+    })),
+}
+VertexLitGeneric {
+    basetexture: "Models/props_mining/rock005a",
+    remaining_properties: Table(Table({
+        "$detailscale": Value(Value("3.2")),
+        "$detailblendmode": Value(Value("0")),
+        "$detail": Value(Value("overlays/detail004")),
+        "$surfaceprop": Value(Value("dirt")),
+        "$detailblendfactor": Value(Value("1.4")),
+    })),
+}
+VertexLitGeneric {
+    basetexture: "Models/props_mining/rock005b",
+    remaining_properties: Table(Table({
+        "$detailblendfactor": Value(Value("1.4")),
+        "$surfaceprop": Value(Value("dirt")),
+        "$detail": Value(Value("overlays/detail004")),
+        "$detailblendmode": Value(Value("0")),
+        "$detailscale": Value(Value("3.2")),
+    })),
+}
+VertexLitGeneric {
+    basetexture: "Models/props_mining/rock005c",
+    remaining_properties: Table(Table({
+        "$detail": Value(Value("overlays/detail004")),
+        "$detailblendmode": Value(Value("0")),
+        "$surfaceprop": Value(Value("dirt")),
+        "$detailblendfactor": Value(Value("1.4")),
+        "$detailscale": Value(Value("3.2")),
+    })),
+}
+VertexLitGeneric {
+    basetexture: "Models/props_swamp/rock002_swamp",
+    remaining_properties: Table(Table({
+        "$detail": Value(Value("overlays/detail004")),
+        "$detailscale": Value(Value("3.2")),
+        "$detailblendfactor": Value(Value("1.4")),
+        "$surfaceprop": Value(Value("dirt")),
+        "$detailblendmode": Value(Value("0")),
+    })),
+}
+VertexLitGeneric {
+    basetexture: "Models/props_swamp/rock002b_swamp",
+    remaining_properties: Table(Table({
+        "$detailscale": Value(Value("3.2")),
+        "$detail": Value(Value("overlays/detail004")),
+        "$detailblendmode": Value(Value("0")),
+        "$surfaceprop": Value(Value("dirt")),
+        "$detailblendfactor": Value(Value("1.4")),
+    })),
+}
+VertexLitGeneric {
+    basetexture: "Models/props_mining/rock002",
+    remaining_properties: Table(Table({
+        "$detailscale": Value(Value("3.2")),
+        "$detailblendfactor": Value(Value("1.4")),
+        "$surfaceprop": Value(Value("dirt")),
+        "$detailblendmode": Value(Value("0")),
+        "$detail": Value(Value("overlays/detail004")),
+    })),
+}
+VertexLitGeneric {
+    basetexture: "Models/props_mining/rock002a",
+    remaining_properties: Table(Table({
+        "$detailblendfactor": Value(Value("1.4")),
+        "$detailblendmode": Value(Value("0")),
+        "$detailscale": Value(Value("3.2")),
+        "$surfaceprop": Value(Value("dirt")),
+        "$detail": Value(Value("overlays/detail004")),
+    })),
+}
+VertexLitGeneric {
+    basetexture: "Models/props_mining/rock002b",
+    remaining_properties: Table(Table({
+        "$detailblendfactor": Value(Value("1.4")),
+        "$detailblendmode": Value(Value("0")),
+        "$detailscale": Value(Value("3.2")),
+        "$detail": Value(Value("overlays/detail004")),
+        "$surfaceprop": Value(Value("dirt")),
+    })),
+}
+VertexLitGeneric {
+    basetexture: "Models/props_woods/leaves_01",
+    remaining_properties: Table(Table({ "$alphatest": Value(Value("1")), "$nocull": Value(Value("1")) })),
+}
+VertexLitGeneric {
+    basetexture: "Models/props_woods/woods_tree_01",
+    remaining_properties: Table(Table({ "$surfaceprop": Value(Value("wood")) })),
+}
+VertexLitGeneric {
+    basetexture: "Models/props_trainyard/train_billboard001",
+    remaining_properties: Table(Table({})),
+}
+VertexLitGeneric {
+    basetexture: "models/props_japan/torii01_unpainted",
+    remaining_properties: Table(Table({
+        "$halflambert": Value(Value("1")),
+        "$surfaceprop": Value(Value("wood")),
+        "$model": Value(Value("1")),
+    })),
+}
+VertexLitGeneric {
+    basetexture: "models/props_japan/torii01_red",
+    remaining_properties: Table(Table({
+        "$model": Value(Value("1")),
+        "$halflambert": Value(Value("1")),
+        "$surfaceprop": Value(Value("wood")),
+    })),
+}
+VertexLitGeneric {
+    basetexture: "models/props_japan/torii01_blue",
+    remaining_properties: Table(Table({
+        "$model": Value(Value("1")),
+        "$halflambert": Value(Value("1")),
+        "$surfaceprop": Value(Value("wood")),
+    })),
+}
+VertexLitGeneric {
+    basetexture: "models/props_swamp/lilypad.vtf",
+    remaining_properties: Table(Table({ "$model": Value(Value("1")) })),
+}
+VertexLitGeneric {
+    basetexture: "models/props_swamp/lilypad.vtf",
+    remaining_properties: Table(Table({ "$model": Value(Value("1")) })),
+}
+VertexLitGeneric {
+    basetexture: "models/props_swamp/lilypad.vtf",
+    remaining_properties: Table(Table({ "$model": Value(Value("1")) })),
+}
+VertexLitGeneric {
+    basetexture: "models/props_japan//japanese_bridge01",
+    remaining_properties: Table(Table({
+        "$model": Value(Value("1")),
+        "$surfaceprop": Value(Value("wood")),
+    })),
+}
+VertexLitGeneric {
+    basetexture: "models\\props_swamp/shrub_03",
+    remaining_properties: Table(Table({
+        "$surfaceprop": Value(Value("default")),
+        "$alphatest": Value(Value("1")),
+    })),
+}
+VertexLitGeneric {
+    basetexture: "models\\props_forest/rock006",
+    remaining_properties: Table(Table({})),
+}
+VertexLitGeneric {
+    basetexture: "models\\props_swamp/shrub_03",
+    remaining_properties: Table(Table({
+        "$alphatest": Value(Value("1")),
+        "$surfaceprop": Value(Value("default")),
+    })),
+}
+VertexLitGeneric {
+    basetexture: "models/props_medieval/bar_table",
+    remaining_properties: Table(Table({
+        "$surfaceprop": Value(Value("wood")),
+        "$phongboost": Value(Value("4")),
+        "$basemapalphaphongmask": Value(Value("1")),
+        "$phong": Value(Value("1")),
+        "$phongexponent": Value(Value("20")),
+        "$phongfresnelranges": Array(Array([ Value(Value("0.5")), Value(Value("1")), Value(Value("2")) ])),
+    })),
+}
+VertexLitGeneric {
+    basetexture: "models\\props_swamp/shrub_03",
+    remaining_properties: Table(Table({
+        "$alphatest": Value(Value("1")),
+        "$surfaceprop": Value(Value("default")),
+    })),
+}
+VertexLitGeneric {
+    basetexture: "models/props_japan/japanese_lantern01",
+    remaining_properties: Table(Table({
+        "$surfaceprop": Value(Value("rock")),
+        "$model": Value(Value("1")),
+    })),
+}
+VertexLitGeneric {
+    basetexture: "Models/props_farm/wooden_barrel",
+    remaining_properties: Table(Table({})),
+}
+VertexLitGeneric {
+    basetexture: "models\\props_japan\\sakura_trunk01",
+    remaining_properties: Table(Table({})),
+}
+VertexLitGeneric {
+    basetexture: "models\\props_japan\\sakura_branch01",
+    remaining_properties: Table(Table({ "$nocull": Value(Value("1")), "$alphatest": Value(Value("1")) })),
+}
+VertexLitGeneric {
+    basetexture: "models\\props_japan\\sakura_branch02",
+    remaining_properties: Table(Table({
+        "$treeswaystartheight": Value(Value("0.8")),
+        "$treesway": Value(Value("1")),
+        "$treeswayspeedhighwindmultiplier": Value(Value("6")),
+        "$treeswayspeed": Value(Value("0.2")),
+        "$treeswaystrength": Value(Value("0.8")),
+        "$treeswayscrumblestrength": Value(Value("0.05")),
+        "$treeswayfalloffexp": Value(Value("2")),
+        "$treeswaystartradius": Value(Value("0.85")),
+        "$treeswayscrumblespeed": Value(Value("2")),
+        "$treeswayheight": Value(Value("100")),
+        "$treeswayspeedlerpend": Value(Value("6")),
+        "$treeswayradius": Value(Value("100")),
+        "$nocull": Value(Value("1")),
+        "$alphatest": Value(Value("1")),
+        "$treeswayscrumblefalloffexp": Value(Value("10")),
+        "$vertexfog": Value(Value("1")),
+        "$treeswayspeedlerpstart": Value(Value("2")),
+        "$treeswayscrumblefrequency": Value(Value("16")),
+    })),
+}
+VertexLitGeneric {
+    basetexture: "models\\props_japan\\sakura_branch01",
+    remaining_properties: Table(Table({
+        "$blendtintbybasealpha": Value(Value("0")),
+        "$nocull": Value(Value("1")),
+        "$blendtintcoloroverbase": Value(Value("0")),
+        "$alphatest": Value(Value("1")),
+        "$color2": Array(Array([ Value(Value("255")), Value(Value("200")), Value(Value("170")) ])),
+    })),
+}
+VertexLitGeneric {
+    basetexture: "models\\props_japan\\sakura_branch02",
+    remaining_properties: Table(Table({
+        "$blendtintcoloroverbase": Value(Value("0")),
+        "$alphatest": Value(Value("1")),
+        "$color2": Array(Array([ Value(Value("255")), Value(Value("200")), Value(Value("170")) ])),
+        "$blendtintbybasealpha": Value(Value("0")),
+        "$nocull": Value(Value("1")),
+    })),
+}
+VertexLitGeneric {
+    basetexture: "models\\props_japan\\sakura_branch01",
+    remaining_properties: Table(Table({
+        "$alphatest": Value(Value("1")),
+        "$blendtintcoloroverbase": Value(Value("0")),
+        "$nocull": Value(Value("1")),
+        "$color2": Array(Array([ Value(Value("170")), Value(Value("225")), Value(Value("255")) ])),
+        "$blendtintbybasealpha": Value(Value("0")),
+    })),
+}
+VertexLitGeneric {
+    basetexture: "models\\props_japan\\sakura_branch02",
+    remaining_properties: Table(Table({
+        "$alphatest": Value(Value("1")),
+        "$color2": Array(Array([ Value(Value("170")), Value(Value("225")), Value(Value("255")) ])),
+        "$blendtintcoloroverbase": Value(Value("0")),
+        "$nocull": Value(Value("1")),
+        "$blendtintbybasealpha": Value(Value("0")),
+    })),
+}
+VertexLitGeneric {
+    basetexture: "models\\props_japan\\sakura_trunk01",
+    remaining_properties: Table(Table({})),
+}
+VertexLitGeneric {
+    basetexture: "models\\props_japan\\sakura_branch01",
+    remaining_properties: Table(Table({ "$nocull": Value(Value("1")), "$alphatest": Value(Value("1")) })),
+}
+VertexLitGeneric {
+    basetexture: "models\\props_japan\\sakura_branch02",
+    remaining_properties: Table(Table({
+        "$treeswayspeedhighwindmultiplier": Value(Value("6")),
+        "$treeswayscrumblestrength": Value(Value("0.05")),
+        "$treeswayfalloffexp": Value(Value("2")),
+        "$treeswaystartradius": Value(Value("0.85")),
+        "$treeswayspeed": Value(Value("0.2")),
+        "$vertexfog": Value(Value("1")),
+        "$treeswayheight": Value(Value("100")),
+        "$treeswayradius": Value(Value("100")),
+        "$alphatest": Value(Value("1")),
+        "$treeswayspeedlerpend": Value(Value("6")),
+        "$treeswaystrength": Value(Value("0.8")),
+        "$treeswayscrumblefalloffexp": Value(Value("10")),
+        "$treeswayscrumblefrequency": Value(Value("16")),
+        "$nocull": Value(Value("1")),
+        "$treeswaystartheight": Value(Value("0.8")),
+        "$treeswayscrumblespeed": Value(Value("2")),
+        "$treesway": Value(Value("1")),
+        "$treeswayspeedlerpstart": Value(Value("2")),
+    })),
+}
+VertexLitGeneric {
+    basetexture: "models\\props_japan\\sakura_branch01",
+    remaining_properties: Table(Table({
+        "$blendtintcoloroverbase": Value(Value("0")),
+        "$alphatest": Value(Value("1")),
+        "$color2": Array(Array([ Value(Value("255")), Value(Value("200")), Value(Value("170")) ])),
+        "$blendtintbybasealpha": Value(Value("0")),
+        "$nocull": Value(Value("1")),
+    })),
+}
+VertexLitGeneric {
+    basetexture: "models\\props_japan\\sakura_branch02",
+    remaining_properties: Table(Table({
+        "$color2": Array(Array([ Value(Value("255")), Value(Value("200")), Value(Value("170")) ])),
+        "$nocull": Value(Value("1")),
+        "$blendtintcoloroverbase": Value(Value("0")),
+        "$alphatest": Value(Value("1")),
+        "$blendtintbybasealpha": Value(Value("0")),
+    })),
+}
+VertexLitGeneric {
+    basetexture: "models\\props_japan\\sakura_branch01",
+    remaining_properties: Table(Table({
+        "$blendtintcoloroverbase": Value(Value("0")),
+        "$color2": Array(Array([ Value(Value("170")), Value(Value("225")), Value(Value("255")) ])),
+        "$blendtintbybasealpha": Value(Value("0")),
+        "$alphatest": Value(Value("1")),
+        "$nocull": Value(Value("1")),
+    })),
+}
+VertexLitGeneric {
+    basetexture: "models\\props_japan\\sakura_branch02",
+    remaining_properties: Table(Table({
+        "$alphatest": Value(Value("1")),
+        "$nocull": Value(Value("1")),
+        "$color2": Array(Array([ Value(Value("170")), Value(Value("225")), Value(Value("255")) ])),
+        "$blendtintcoloroverbase": Value(Value("0")),
+        "$blendtintbybasealpha": Value(Value("0")),
+    })),
+}
+VertexLitGeneric {
+    basetexture: "models\\props_japan\\sakura_trunk01",
+    remaining_properties: Table(Table({})),
+}
+VertexLitGeneric {
+    basetexture: "models\\props_japan\\sakura_branch01",
+    remaining_properties: Table(Table({ "$alphatest": Value(Value("1")), "$nocull": Value(Value("1")) })),
+}
+VertexLitGeneric {
+    basetexture: "models\\props_japan\\sakura_branch02",
+    remaining_properties: Table(Table({
+        "$treeswayspeed": Value(Value("0.2")),
+        "$vertexfog": Value(Value("1")),
+        "$treeswaystrength": Value(Value("0.8")),
+        "$treeswayspeedhighwindmultiplier": Value(Value("6")),
+        "$treeswayscrumblefalloffexp": Value(Value("10")),
+        "$treeswayscrumblespeed": Value(Value("2")),
+        "$treeswayfalloffexp": Value(Value("2")),
+        "$treeswayspeedlerpend": Value(Value("6")),
+        "$alphatest": Value(Value("1")),
+        "$treeswaystartradius": Value(Value("0.85")),
+        "$treeswayscrumblestrength": Value(Value("0.05")),
+        "$treeswayscrumblefrequency": Value(Value("16")),
+        "$treeswaystartheight": Value(Value("0.8")),
+        "$treesway": Value(Value("1")),
+        "$treeswayradius": Value(Value("100")),
+        "$treeswayspeedlerpstart": Value(Value("2")),
+        "$treeswayheight": Value(Value("100")),
+        "$nocull": Value(Value("1")),
+    })),
+}
+VertexLitGeneric {
+    basetexture: "models\\props_japan\\sakura_branch01",
+    remaining_properties: Table(Table({
+        "$nocull": Value(Value("1")),
+        "$color2": Array(Array([ Value(Value("255")), Value(Value("200")), Value(Value("170")) ])),
+        "$blendtintcoloroverbase": Value(Value("0")),
+        "$blendtintbybasealpha": Value(Value("0")),
+        "$alphatest": Value(Value("1")),
+    })),
+}
+VertexLitGeneric {
+    basetexture: "models\\props_japan\\sakura_branch02",
+    remaining_properties: Table(Table({
+        "$nocull": Value(Value("1")),
+        "$color2": Array(Array([ Value(Value("255")), Value(Value("200")), Value(Value("170")) ])),
+        "$blendtintcoloroverbase": Value(Value("0")),
+        "$alphatest": Value(Value("1")),
+        "$blendtintbybasealpha": Value(Value("0")),
+    })),
+}
+VertexLitGeneric {
+    basetexture: "models\\props_japan\\sakura_branch01",
+    remaining_properties: Table(Table({
+        "$alphatest": Value(Value("1")),
+        "$color2": Array(Array([ Value(Value("170")), Value(Value("225")), Value(Value("255")) ])),
+        "$blendtintbybasealpha": Value(Value("0")),
+        "$nocull": Value(Value("1")),
+        "$blendtintcoloroverbase": Value(Value("0")),
+    })),
+}
+VertexLitGeneric {
+    basetexture: "models\\props_japan\\sakura_branch02",
+    remaining_properties: Table(Table({
+        "$alphatest": Value(Value("1")),
+        "$blendtintcoloroverbase": Value(Value("0")),
+        "$color2": Array(Array([ Value(Value("170")), Value(Value("225")), Value(Value("255")) ])),
+        "$nocull": Value(Value("1")),
+        "$blendtintbybasealpha": Value(Value("0")),
+    })),
+}
+VertexLitGeneric {
+    basetexture: "models\\props_japan\\sakura_trunk01",
+    remaining_properties: Table(Table({})),
+}
+VertexLitGeneric {
+    basetexture: "models\\props_japan\\sakura_branch01",
+    remaining_properties: Table(Table({ "$alphatest": Value(Value("1")), "$nocull": Value(Value("1")) })),
+}
+VertexLitGeneric {
+    basetexture: "models\\props_japan\\sakura_branch02",
+    remaining_properties: Table(Table({
+        "$treeswayheight": Value(Value("100")),
+        "$alphatest": Value(Value("1")),
+        "$treeswaystrength": Value(Value("0.8")),
+        "$treesway": Value(Value("1")),
+        "$treeswayscrumblefalloffexp": Value(Value("10")),
+        "$treeswaystartradius": Value(Value("0.85")),
+        "$treeswayspeedhighwindmultiplier": Value(Value("6")),
+        "$nocull": Value(Value("1")),
+        "$treeswaystartheight": Value(Value("0.8")),
+        "$treeswayspeed": Value(Value("0.2")),
+        "$treeswayfalloffexp": Value(Value("2")),
+        "$treeswayspeedlerpend": Value(Value("6")),
+        "$treeswayscrumblestrength": Value(Value("0.05")),
+        "$treeswayscrumblespeed": Value(Value("2")),
+        "$treeswayradius": Value(Value("100")),
+        "$vertexfog": Value(Value("1")),
+        "$treeswayspeedlerpstart": Value(Value("2")),
+        "$treeswayscrumblefrequency": Value(Value("16")),
+    })),
+}
+VertexLitGeneric {
+    basetexture: "models\\props_japan\\sakura_branch01",
+    remaining_properties: Table(Table({
+        "$blendtintcoloroverbase": Value(Value("0")),
+        "$blendtintbybasealpha": Value(Value("0")),
+        "$nocull": Value(Value("1")),
+        "$color2": Array(Array([ Value(Value("255")), Value(Value("200")), Value(Value("170")) ])),
+        "$alphatest": Value(Value("1")),
+    })),
+}
+VertexLitGeneric {
+    basetexture: "models\\props_japan\\sakura_branch02",
+    remaining_properties: Table(Table({
+        "$blendtintbybasealpha": Value(Value("0")),
+        "$color2": Array(Array([ Value(Value("255")), Value(Value("200")), Value(Value("170")) ])),
+        "$nocull": Value(Value("1")),
+        "$alphatest": Value(Value("1")),
+        "$blendtintcoloroverbase": Value(Value("0")),
+    })),
+}
+VertexLitGeneric {
+    basetexture: "models\\props_japan\\sakura_branch01",
+    remaining_properties: Table(Table({
+        "$blendtintbybasealpha": Value(Value("0")),
+        "$alphatest": Value(Value("1")),
+        "$color2": Array(Array([ Value(Value("170")), Value(Value("225")), Value(Value("255")) ])),
+        "$nocull": Value(Value("1")),
+        "$blendtintcoloroverbase": Value(Value("0")),
+    })),
+}
+VertexLitGeneric {
+    basetexture: "models\\props_japan\\sakura_branch02",
+    remaining_properties: Table(Table({
+        "$color2": Array(Array([ Value(Value("170")), Value(Value("225")), Value(Value("255")) ])),
+        "$nocull": Value(Value("1")),
+        "$blendtintcoloroverbase": Value(Value("0")),
+        "$blendtintbybasealpha": Value(Value("0")),
+        "$alphatest": Value(Value("1")),
+    })),
+}
+VertexLitGeneric {
+    basetexture: "Models/props_2fort/miningcrate001",
+    remaining_properties: Table(Table({})),
+}
+VertexLitGeneric {
+    basetexture: "Models/props_2fort/miningcrate002",
+    remaining_properties: Table(Table({})),
+}
+VertexLitGeneric {
+    basetexture: "models\\props_foliage/tree_pine01",
+    remaining_properties: Table(Table({ "$nocull": Value(Value("1")), "$alphatest": Value(Value("1")) })),
+}
+VertexLitGeneric {
+    basetexture: "models\\props_foliage/tree_pine01_snow",
+    remaining_properties: Table(Table({ "$nocull": Value(Value("1")), "$alphatest": Value(Value("1")) })),
+}
+VertexLitGeneric {
+    basetexture: "models\\props_japan\\shoji_wall_screen01",
+    remaining_properties: Table(Table({})),
+}
+VertexLitGeneric {
+    basetexture: "models/props_japan/asian_screen01",
+    remaining_properties: Table(Table({
+        "$model": Value(Value("1")),
+        "$surfaceprop": Value(Value("wood")),
+    })),
+}
+VertexLitGeneric {
+    basetexture: "models/props_japan/asian_screen01b",
+    remaining_properties: Table(Table({
+        "$surfaceprop": Value(Value("paper")),
+        "$model": Value(Value("1")),
+        "$translucent": Value(Value("1")),
+    })),
+}
+VertexLitGeneric {
+    basetexture: "models/props_japan/asian_screen02b",
+    remaining_properties: Table(Table({
+        "$surfaceprop": Value(Value("paper")),
+        "$translucent": Value(Value("1")),
+        "$model": Value(Value("1")),
+    })),
+}
+VertexLitGeneric {
+    basetexture: "models/props_japan/asian_screen03b",
+    remaining_properties: Table(Table({
+        "$surfaceprop": Value(Value("paper")),
+        "$translucent": Value(Value("1")),
+        "$model": Value(Value("1")),
+    })),
+}
+VertexLitGeneric {
+    basetexture: "Models/props_farm/wood_pile",
+    remaining_properties: Table(Table({})),
+}
+VertexLitGeneric {
+    basetexture: "models/props_japan/calligraphy_set01",
+    remaining_properties: Table(Table({
+        "$model": Value(Value("1")),
+        "$surfaceprop": Value(Value("none")),
+    })),
+}
+VertexLitGeneric {
+    basetexture: "models\\props_japan\\kawara_roof_tile01",
+    remaining_properties: Table(Table({})),
+}
+VertexLitGeneric {
+    basetexture: "models\\props_japan\\kawara_roof_tile02",
+    remaining_properties: Table(Table({})),
+}
+VertexLitGeneric {
+    basetexture: "models\\props_japan\\kawara_roof_tile03",
+    remaining_properties: Table(Table({})),
+}
+VertexLitGeneric {
+    basetexture: "models\\props_japan\\kawara_roof_tile01",
+    remaining_properties: Table(Table({})),
+}
+VertexLitGeneric {
+    basetexture: "models\\props_japan\\kawara_roof_tile02",
+    remaining_properties: Table(Table({})),
+}
+VertexLitGeneric {
+    basetexture: "models\\props_japan\\kawara_roof_tile03",
+    remaining_properties: Table(Table({})),
+}
+VertexLitGeneric {
+    basetexture: "models\\props_japan\\kawara_roof_tile01",
+    remaining_properties: Table(Table({})),
+}
+VertexLitGeneric {
+    basetexture: "models\\props_japan\\kawara_roof_tile02",
+    remaining_properties: Table(Table({})),
+}
+VertexLitGeneric {
+    basetexture: "models\\props_japan\\kawara_roof_tile03",
+    remaining_properties: Table(Table({})),
+}
+VertexLitGeneric {
+    basetexture: "models/props_medieval/bar_table",
+    remaining_properties: Table(Table({
+        "$phong": Value(Value("1")),
+        "$basemapalphaphongmask": Value(Value("1")),
+        "$surfaceprop": Value(Value("wood")),
+        "$phongboost": Value(Value("4")),
+        "$phongexponent": Value(Value("20")),
+        "$phongfresnelranges": Array(Array([ Value(Value("0.5")), Value(Value("1")), Value(Value("2")) ])),
+    })),
+}
+VertexLitGeneric {
+    basetexture: "models\\props_hydro/barrel_crate",
+    remaining_properties: Table(Table({})),
+}
+VertexLitGeneric {
+    basetexture: "models\\props_hydro/barrel_crate",
+    remaining_properties: Table(Table({})),
+}
+VertexLitGeneric {
+    basetexture: "Models/props_swamp/rock004_swamp",
+    remaining_properties: Table(Table({
+        "$surfaceprop": Value(Value("dirt")),
+        "$detailblendfactor": Value(Value("1.4")),
+        "$detailscale": Value(Value("3.2")),
+        "$detail": Value(Value("overlays/detail004")),
+        "$detailblendmode": Value(Value("0")),
+    })),
+}
+VertexLitGeneric {
+    basetexture: "Models/props_swamp/rock004b_swamp",
+    remaining_properties: Table(Table({
+        "$detailblendmode": Value(Value("0")),
+        "$detailblendfactor": Value(Value("1.4")),
+        "$surfaceprop": Value(Value("dirt")),
+        "$detailscale": Value(Value("3.2")),
+        "$detail": Value(Value("overlays/detail004")),
+    })),
+}
+VertexLitGeneric {
+    basetexture: "Models/props_mining/rock004",
+    remaining_properties: Table(Table({
+        "$detail": Value(Value("overlays/detail004")),
+        "$surfaceprop": Value(Value("dirt")),
+        "$detailblendfactor": Value(Value("1.4")),
+        "$detailblendmode": Value(Value("0")),
+        "$detailscale": Value(Value("3.2")),
+    })),
+}
+VertexLitGeneric {
+    basetexture: "Models/props_mining/rock004a",
+    remaining_properties: Table(Table({
+        "$detailblendfactor": Value(Value("1.4")),
+        "$detailscale": Value(Value("3.2")),
+        "$detail": Value(Value("overlays/detail004")),
+        "$detailblendmode": Value(Value("0")),
+        "$surfaceprop": Value(Value("dirt")),
+    })),
+}
+VertexLitGeneric {
+    basetexture: "Models/props_mining/rock004b",
+    remaining_properties: Table(Table({
+        "$detailblendmode": Value(Value("0")),
+        "$detailscale": Value(Value("3.2")),
+        "$surfaceprop": Value(Value("dirt")),
+        "$detailblendfactor": Value(Value("1.4")),
+        "$detail": Value(Value("overlays/detail004")),
+    })),
+}
+VertexLitGeneric {
+    basetexture: "Models/props_mining/rock004c",
+    remaining_properties: Table(Table({
+        "$detailscale": Value(Value("3.2")),
+        "$detailblendmode": Value(Value("0")),
+        "$detail": Value(Value("overlays/detail004")),
+        "$detailblendfactor": Value(Value("1.4")),
+        "$surfaceprop": Value(Value("dirt")),
+    })),
+}
+VertexLitGeneric {
+    basetexture: "models/props_japan/banner01",
+    remaining_properties: Table(Table({
+        "$model": Value(Value("1")),
+        "$surfaceprop": Value(Value("none")),
+    })),
+}
+VertexLitGeneric {
+    basetexture: "models/props_japan/banner01a",
+    remaining_properties: Table(Table({
+        "$model": Value(Value("1")),
+        "$surfaceprop": Value(Value("none")),
+    })),
+}
+VertexLitGeneric {
+    basetexture: "models/props_japan/banner01b",
+    remaining_properties: Table(Table({
+        "$surfaceprop": Value(Value("none")),
+        "$model": Value(Value("1")),
+    })),
+}
+VertexLitGeneric {
+    basetexture: "models/props_japan/banner01c",
+    remaining_properties: Table(Table({
+        "$surfaceprop": Value(Value("none")),
+        "$model": Value(Value("1")),
+    })),
+}
+VertexLitGeneric {
+    basetexture: "models/props_japan/banner01d",
+    remaining_properties: Table(Table({
+        "$surfaceprop": Value(Value("none")),
+        "$model": Value(Value("1")),
+    })),
+}
+VertexLitGeneric {
+    basetexture: "models/props_japan/banner01e",
+    remaining_properties: Table(Table({
+        "$model": Value(Value("1")),
+        "$surfaceprop": Value(Value("none")),
+    })),
+}
+VertexLitGeneric {
+    basetexture: "models/props_japan/banner01f",
+    remaining_properties: Table(Table({
+        "$surfaceprop": Value(Value("none")),
+        "$model": Value(Value("1")),
+    })),
+}
+VertexLitGeneric {
+    basetexture: "models/props_japan/banner01g",
+    remaining_properties: Table(Table({
+        "$surfaceprop": Value(Value("none")),
+        "$model": Value(Value("1")),
+    })),
+}
+VertexLitGeneric {
+    basetexture: "models\\props_japan\\tf_bamboo01",
+    remaining_properties: Table(Table({})),
+}
+VertexLitGeneric {
+    basetexture: "models\\props_japan\\tf_bamboo_leaf01",
+    remaining_properties: Table(Table({ "$alphatest": Value(Value("1")), "$nocull": Value(Value("1")) })),
+}
+VertexLitGeneric {
+    basetexture: "models\\props_japan\\tf_bamboo01",
+    remaining_properties: Table(Table({})),
+}
+VertexLitGeneric {
+    basetexture: "models\\props_japan\\tf_bamboo_leaf01",
+    remaining_properties: Table(Table({ "$alphatest": Value(Value("1")), "$nocull": Value(Value("1")) })),
+}
+VertexLitGeneric {
+    basetexture: "models\\props_japan\\temple_column01",
+    remaining_properties: Table(Table({})),
+}
+VertexLitGeneric {
+    basetexture: "models\\props_japan\\temple_column02",
+    remaining_properties: Table(Table({})),
+}
+VertexLitGeneric {
+    basetexture: "models\\props_japan\\lantern_hanging01",
+    remaining_properties: Table(Table({})),
+}
+VertexLitGeneric {
+    basetexture: "models\\props_japan\\lantern_hanging02",
+    remaining_properties: Table(Table({ "$selfillum": Value(Value("1")) })),
+}
+VertexLitGeneric {
+    basetexture: "models\\props_japan\\lantern_wall01",
+    remaining_properties: Table(Table({ "$selfillum": Value(Value("1")) })),
+}
+VertexLitGeneric {
+    basetexture: "models\\props_japan\\japanese_stool01",
+    remaining_properties: Table(Table({ "$model": Value(Value("1")) })),
+}
+VertexLitGeneric {
+    basetexture: "models\\props_japan\\lantern_hanging01",
+    remaining_properties: Table(Table({})),
+}
+VertexLitGeneric {
+    basetexture: "models\\props_japan\\lantern_hanging02",
+    remaining_properties: Table(Table({ "$selfillum": Value(Value("1")) })),
+}
+VertexLitGeneric {
+    basetexture: "models\\props_foliage/tree_pine01",
+    remaining_properties: Table(Table({ "$alphatest": Value(Value("1")), "$nocull": Value(Value("1")) })),
+}

@@ -8,7 +8,7 @@ pub struct InstanceAdapterDevice {
 }
 
 impl InstanceAdapterDevice {
-    pub async fn new() -> anyhow::Result<Arc<Self>> {
+    pub async fn new() -> eyre::Result<Arc<Self>> {
         let instance = Arc::new(wgpu::Instance::new(&wgpu::InstanceDescriptor {
             backends: wgpu::Backends::PRIMARY,
             ..Default::default()

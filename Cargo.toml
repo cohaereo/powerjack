@@ -12,6 +12,7 @@ members = [
 
 [workspace.dependencies]
 binrw = "0.15"
+eyre = "0.6"
 glam = "0.30.5"
 
 [profile.dev.package.powerjack-bsp]

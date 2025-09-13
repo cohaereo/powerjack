@@ -10,11 +10,11 @@ powerjack-mdl = { path = "../mdl" }
 powerjack-vpk = { path = "../vpk" }
 powerjack-vtf = { path = "../vtf" }
 
-anyhow = "1"
 binrw.workspace = true
 bitflags = "2.9.3"
 bytemuck = { version = "1.23.2", features = ["derive"] }
 clap = { version = "4.5.45", features = ["derive"] }
+eyre = "0.6"
 game-detector = { version = "0.1.5", features = [
     "steam",
 ], default-features = false }

@@ -125,7 +125,7 @@ pub struct VtxHeader {
 }
 
 impl VtxData {
-    pub fn parse<R: Read + Seek>(input: &mut R) -> anyhow::Result<Self> {
+    pub fn parse<R: Read + Seek>(input: &mut R) -> eyre::Result<Self> {
         let header = input.read_le::<VtxHeader>()?;
 
         let mut vtx_data = Self {

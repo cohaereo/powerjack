@@ -4,6 +4,6 @@ version = "0.0.0"
 edition = "2024"
 
 [dependencies]
-anyhow = "1"
 binrw.workspace = true
 bitflags = "2.9.3"
+eyre.workspace = true

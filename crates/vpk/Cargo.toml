@@ -4,6 +4,6 @@ version = "0.0.0"
 edition = "2021"
 
 [dependencies]
-anyhow = "1"
 binrw.workspace = true
 case_insensitive_hashmap = "1.0.1"
+eyre = "0.6"

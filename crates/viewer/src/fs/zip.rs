@@ -4,7 +4,7 @@ use std::path::Path;
 use zip_lzma::result::ZipError;
 
 impl<R: Read + Seek + Send + Sync> Mountable for zip_lzma::read::ZipArchive<R> {
-    fn read_path(&mut self, path: &str) -> anyhow::Result<Option<Vec<u8>>> {
+    fn read_path(&mut self, path: &str) -> eyre::Result<Option<Vec<u8>>> {
         let mut path = path.to_lowercase().replace("\\", "/");
         // Eliminate double path separators
         while path.contains("//") {

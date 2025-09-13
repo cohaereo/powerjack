@@ -1,5 +1,5 @@
-use anyhow::Context;
 use binrw::BinReaderExt;
+use eyre::{Context, ContextCompat};
 use powerjack_vtf::{VtfHeader, VtfTextureFormat};
 use std::io::{Cursor, Read, Seek, SeekFrom};
 use wgpu::util::DeviceExt;
@@ -12,14 +12,14 @@ pub fn load_vtf(
     fs: &SharedFilesystem,
     iad: &InstanceAdapterDevice,
     path: &str,
-) -> anyhow::Result<(wgpu::Texture, wgpu::TextureView)> {
+) -> eyre::Result<(wgpu::Texture, wgpu::TextureView)> {
     let path = ensure_path_has_extension(path, "vtf");
     let Some(vtf_data) = fs
         .lock()
         .read_path(&path)
         .context("Failed to read VTF texture data")?
     else {
-        anyhow::bail!("VTF file does not exist");
+        eyre::bail!("VTF file {path} does not exist");
     };
 
     let mut cur = Cursor::new(vtf_data);
@@ -51,7 +51,7 @@ pub fn load_vtf(
 
 pub fn load_vtf_data<R: Read + Seek>(
     c: &mut R,
-) -> anyhow::Result<(Vec<u8>, wgpu::TextureFormat, u32, u32)> {
+) -> eyre::Result<(Vec<u8>, wgpu::TextureFormat, u32, u32)> {
     let vtf: VtfHeader = c.read_le()?;
     let offset = vtf
         .calculate_data_offset(0)

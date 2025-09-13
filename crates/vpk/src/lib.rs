@@ -1,6 +1,6 @@
-use anyhow::Context;
 use binrw::{BinReaderExt, NullString};
 use case_insensitive_hashmap::CaseInsensitiveHashMap;
+use eyre::{Context, OptionExt};
 use std::fs::File;
 use std::io::{Read, Seek, SeekFrom};
 use std::path::Path;
@@ -25,7 +25,7 @@ pub struct VpkFile<R: Read + Seek> {
 
 impl<R: Read + Seek> VpkFile<R> {
     /// If filename is not given, you will not be able to read non-preload files through this struct
-    pub fn new(mut reader: R, filename: Option<String>) -> anyhow::Result<Self> {
+    pub fn new(mut reader: R, filename: Option<String>) -> eyre::Result<Self> {
         let header = reader.read_le::<VpkHeader>()?;
         Ok(Self {
             directory: Self::read_directory(&mut reader).context("Failed to read VPK directory")?,
@@ -37,7 +37,7 @@ impl<R: Read + Seek> VpkFile<R> {
 
     fn read_directory(
         r: &mut R,
-    ) -> anyhow::Result<CaseInsensitiveHashMap<CaseInsensitiveHashMap<VpkDirectoryPath>>> {
+    ) -> eyre::Result<CaseInsensitiveHashMap<CaseInsensitiveHashMap<VpkDirectoryPath>>> {
         let mut directory = CaseInsensitiveHashMap::new();
         loop {
             let extension = r
@@ -88,10 +88,7 @@ impl<R: Read + Seek> VpkFile<R> {
         Ok(directory)
     }
 
-    pub fn read_data_from_path(
-        &mut self,
-        path: impl AsRef<str>,
-    ) -> anyhow::Result<Option<Vec<u8>>> {
+    pub fn read_data_from_path(&mut self, path: impl AsRef<str>) -> eyre::Result<Option<Vec<u8>>> {
         let mut path = path.as_ref().replace("\\", "/");
         // Eliminate double path separators
         while path.contains("//") {
@@ -101,15 +98,17 @@ impl<R: Read + Seek> VpkFile<R> {
         let path = Path::new(&path);
         let extension = path
             .extension()
-            .context("Failed to get path extension")?
+            .ok_or_eyre("Failed to get path extension")?
             .to_str()
-            .context("Failed to convert path extension to string")?;
+            .ok_or_eyre("Failed to convert path extension to string")?;
 
         let Some(file_path) = path.parent() else {
             return Ok(None);
         };
 
-        let filename = path.file_stem().context("Path does not have a filename")?;
+        let filename = path
+            .file_stem()
+            .ok_or_eyre("Path does not have a filename")?;
 
         let Some(extension) = self.directory.get(extension) else {
             return Ok(None);
@@ -118,7 +117,7 @@ impl<R: Read + Seek> VpkFile<R> {
             file_path
                 .as_os_str()
                 .to_str()
-                .context("Failed to convert path to string")?,
+                .ok_or_eyre("Failed to convert path to string")?,
         ) else {
             return Ok(None);
         };
@@ -126,19 +125,19 @@ impl<R: Read + Seek> VpkFile<R> {
         let Some(entry) = path.files.get(
             filename
                 .to_str()
-                .context("Failed to convert filename to string")?,
+                .ok_or_eyre("Failed to convert filename to string")?,
         ) else {
             return Ok(None);
         };
 
         if entry.is_preload() {
-            anyhow::bail!("Preload files are not supported");
+            eyre::bail!("Preload files are not supported");
         }
 
         let archive_path = self
             .dir_path
             .as_ref()
-            .context("No VPK filename given, cannot read files")?
+            .ok_or_eyre("No VPK filename given, cannot read files")?
             .replace("_dir.vpk", &format!("_{:03}.vpk", entry.archive_index));
 
         let mut archive_file = File::open(&archive_path)?;

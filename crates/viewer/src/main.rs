@@ -1,8 +1,8 @@
 use std::{fs::File, io::BufReader, path::PathBuf, rc::Rc, sync::Arc, time::Instant};
 
-use anyhow::Context as _;
 use chroma_dbg::ChromaDebug;
 use clap::Parser;
+use eyre::Context;
 use game_detector::InstalledGame;
 use glam::{Mat4, Quat, Vec3};
 use image::EncodableLayout;
@@ -31,7 +31,7 @@ extern crate tracing;
 
 static ICON_DATA: &[u8] = include_bytes!("../../../powerjack.png");
 
-fn main() -> anyhow::Result<()> {
+fn main() -> eyre::Result<()> {
     tracing::subscriber::set_global_default(
         tracing_subscriber::registry()
             .with(tracing_subscriber::fmt::layer().compact().without_time())
@@ -68,7 +68,7 @@ fn main() -> anyhow::Result<()> {
         tf_dir.join("tf2_misc_dir.vpk"),
         hl2_dir.join("hl2_misc_dir.vpk"),
     ];
-    let mounts: Vec<anyhow::Result<Box<dyn Mountable>>> = mount_paths
+    let mounts: Vec<eyre::Result<Box<dyn Mountable>>> = mount_paths
         .par_iter()
         .map(|path| {
             info!("Reading VPK {}", path.display());

@@ -45,7 +45,7 @@ pub struct StudioVertex {
 }
 
 impl VvdData {
-    pub fn parse<R: Read + Seek>(input: &mut R) -> anyhow::Result<Self> {
+    pub fn parse<R: Read + Seek>(input: &mut R) -> eyre::Result<Self> {
         let header = input.read_le::<VvdHeader>()?;
         input.seek(SeekFrom::Start(header.vertex_data_start as u64))?;
         let vertices = input.read_le_args(
