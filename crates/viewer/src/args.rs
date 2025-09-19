@@ -1,6 +1,10 @@
 #[derive(clap::Parser)]
 #[command(author, version, about)]
 pub struct Args {
+    /// Path to your TF2 installation
+    #[clap(long)]
+    pub install_dir: Option<String>,
+
     /// Path to the BSP file to load
     #[clap(short, long)]
     pub bsp: Option<String>,

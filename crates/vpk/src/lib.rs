@@ -9,16 +9,14 @@ use crate::structs::{VpkDirectoryEntry, VpkHeader};
 
 mod structs;
 
-#[derive(Debug)]
-pub struct VpkDirectoryPath {
-    pub files: CaseInsensitiveHashMap<VpkDirectoryEntry>,
-}
+type PathMap<V> = CaseInsensitiveHashMap<V>;
+type ExtensionMap<V> = CaseInsensitiveHashMap<V>;
 
 pub struct VpkFile<R: Read + Seek> {
     reader: R,
     pub header: VpkHeader,
     /// Maps file extensions to a list of paths
-    pub directory: CaseInsensitiveHashMap<CaseInsensitiveHashMap<VpkDirectoryPath>>,
+    pub directory: ExtensionMap<PathMap<VpkDirectoryEntry>>,
 
     dir_path: Option<String>,
 }
@@ -35,10 +33,8 @@ impl<R: Read + Seek> VpkFile<R> {
         })
     }
 
-    fn read_directory(
-        r: &mut R,
-    ) -> eyre::Result<CaseInsensitiveHashMap<CaseInsensitiveHashMap<VpkDirectoryPath>>> {
-        let mut directory = CaseInsensitiveHashMap::new();
+    fn read_directory(r: &mut R) -> eyre::Result<ExtensionMap<PathMap<VpkDirectoryEntry>>> {
+        let mut directory = ExtensionMap::with_capacity_and_hasher(32, Default::default());
         loop {
             let extension = r
                 .read_le::<NullString>()
@@ -48,7 +44,7 @@ impl<R: Read + Seek> VpkFile<R> {
                 break;
             }
 
-            let mut paths = CaseInsensitiveHashMap::with_capacity(4096);
+            let mut paths = PathMap::with_capacity(4096);
             loop {
                 let path = r
                     .read_le::<NullString>()
@@ -57,8 +53,6 @@ impl<R: Read + Seek> VpkFile<R> {
                 if path.is_empty() {
                     break;
                 }
-
-                let mut path_files = CaseInsensitiveHashMap::with_capacity(4096);
 
                 loop {
                     let filename = r
@@ -76,12 +70,11 @@ impl<R: Read + Seek> VpkFile<R> {
                     // Skip the preload bytes, if any
                     r.seek(SeekFrom::Current(entry.preload_bytes as i64))?;
 
-                    path_files.insert(filename, entry);
+                    paths.insert(format!("{path}/{filename}"), entry);
                 }
-
-                paths.insert(path, VpkDirectoryPath { files: path_files });
             }
 
+            paths.shrink_to_fit();
             directory.insert(extension, paths);
         }
 
@@ -102,30 +95,16 @@ impl<R: Read + Seek> VpkFile<R> {
             .to_str()
             .ok_or_eyre("Failed to convert path extension to string")?;
 
-        let Some(file_path) = path.parent() else {
-            return Ok(None);
-        };
-
-        let filename = path
-            .file_stem()
-            .ok_or_eyre("Path does not have a filename")?;
+        let file_path = path.with_extension("");
 
         let Some(extension) = self.directory.get(extension) else {
             return Ok(None);
         };
-        let Some(path) = extension.get(
+        let Some(entry) = extension.get(
             file_path
                 .as_os_str()
                 .to_str()
                 .ok_or_eyre("Failed to convert path to string")?,
-        ) else {
-            return Ok(None);
-        };
-
-        let Some(entry) = path.files.get(
-            filename
-                .to_str()
-                .ok_or_eyre("Failed to convert filename to string")?,
         ) else {
             return Ok(None);
         };

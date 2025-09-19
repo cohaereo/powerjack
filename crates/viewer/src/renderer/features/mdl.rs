@@ -102,14 +102,23 @@ impl MdlRenderer {
                                 ];
 
                                 for vertex in &verts {
-                                    let orig_vertex = &fixup_vertices[accum_index
-                                        + mesh.vertex_offset as usize
-                                        + vertex.orig_mesh_vert_id as usize];
-                                    vertices.push(MdlVertex {
-                                        position: orig_vertex.position.into(),
-                                        normal: orig_vertex.normal.into(),
-                                        uv: orig_vertex.uv.into(),
-                                    });
+                                    if let Some(orig_vertex) = fixup_vertices.get(
+                                        accum_index
+                                            + mesh.vertex_offset as usize
+                                            + vertex.orig_mesh_vert_id as usize,
+                                    ) {
+                                        vertices.push(MdlVertex {
+                                            position: orig_vertex.position.into(),
+                                            normal: orig_vertex.normal.into(),
+                                            uv: orig_vertex.uv.into(),
+                                        });
+                                    } else {
+                                        vertices.push(MdlVertex {
+                                            position: Vec3::ZERO,
+                                            normal: Vec3::ZERO,
+                                            uv: Vec2::ZERO,
+                                        });
+                                    }
                                 }
                             }
                         }

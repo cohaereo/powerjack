@@ -1,4 +1,4 @@
-use std::{fs::File, io::BufReader, path::PathBuf, rc::Rc, sync::Arc, time::Instant};
+use std::{fs::File, io::Cursor, path::PathBuf, rc::Rc, sync::Arc, time::Instant};
 
 use clap::Parser;
 use eyre::Context;
@@ -42,14 +42,18 @@ fn main() -> eyre::Result<()> {
     )
     .expect("Failed to set global tracing subscriber");
 
-    let tf2_path = if let Some(InstalledGame::Steam(appstate)) =
+    let args = args::Args::parse();
+    let tf2_path = if let Some(path) = args.install_dir {
+        path.clone()
+    } else if let Some(InstalledGame::Steam(appstate)) =
         game_detector::find_all_games().into_iter().find(|g| {
             if let InstalledGame::Steam(g) = g {
                 g.appid == 440
             } else {
                 false
             }
-        }) {
+        })
+    {
         appstate.game_path
     } else {
         panic!("TF2 installation not found");
@@ -58,7 +62,6 @@ fn main() -> eyre::Result<()> {
     let tf2_path = PathBuf::from(tf2_path);
     let tf_dir = tf2_path.join("tf");
     let hl2_dir = tf2_path.join("hl2");
-    let args = args::Args::parse();
 
     let mut fs = Filesystem::default();
     let mut mount_paths = vec![
@@ -74,7 +77,9 @@ fn main() -> eyre::Result<()> {
         .par_iter()
         .map(|path| {
             info!("Reading VPK {}", path.display());
-            let f = BufReader::with_capacity(1024 * 1024, File::open(path)?);
+            let data = std::fs::read(path)
+                .with_context(|| format!("Failed to read VPK file {}", path.display()))?;
+            let f = Cursor::new(data);
             let boxed: Box<dyn Mountable> =
                 Box::new(VpkFile::new(f, Some(path.to_string_lossy().to_string()))?);
             Ok(boxed)

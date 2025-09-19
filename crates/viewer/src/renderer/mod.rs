@@ -124,7 +124,8 @@ impl<'a> Renderer<'a> {
             });
 
         // Skybox pass
-        {
+        let render_skybox = false;
+        if render_skybox {
             let mut rpass = encoder.begin_render_pass(&wgpu::RenderPassDescriptor {
                 color_attachments: &[Some(wgpu::RenderPassColorAttachment {
                     view: &view,
