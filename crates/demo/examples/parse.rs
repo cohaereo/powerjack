@@ -55,6 +55,52 @@ fn main() -> anyhow::Result<()> {
                             let command = br.read_nullstring()?;
                             println!("    net_StringCmd: {command}");
                         }
+                        5 => {
+                            // net_SetConVar
+                            let num_vars = br.read_bits(8);
+                            println!("    net_SetConVar ({num_vars} vars):");
+                            for i in 0..num_vars {
+                                let name = br.read_nullstring()?;
+                                let value = br.read_nullstring()?;
+                                println!("        {i} | '{name}' = '{value}'");
+                            }
+                            println!();
+                        }
+                        7 => {
+                            // svc_Print
+                            let msg = br.read_nullstring()?;
+                            println!("    svc_Print: {msg}");
+                        }
+                        11 => {
+                            // svc_SetPause
+                            let paused = br.read_bit();
+                            println!("    svc_SetPause: paused={}", paused);
+                        }
+                        13 => {
+                            // svc_UpdateStringTable
+                            // const MAX_STRING_TABLES: usize = 32;
+                            let table_id = br.read_bits(5); // q_log2(MAX_STRING_TABLES)
+                            let num_changed_entries =
+                                if br.read_bit() { br.read_bits(16) } else { 1 };
+
+                            let length = br.read_bits(20);
+                            let data = br.read_bits_vec(length as usize);
+                            println!(
+                                "    svc_UpdateStringTable: table_id: {}, num_changed_entries: {}, length: {}, data: {:02X?}",
+                                table_id, num_changed_entries, length, data
+                            );
+                        }
+                        15 => {
+                            // svc_VoiceData
+                            let from_client = br.read_bits(8);
+                            let proximity = br.read_bits(8) != 0;
+                            let length = br.read_bits(16);
+                            let data = br.read_bits_vec(length as usize);
+                            println!(
+                                "    svc_VoiceData: from_client: {}, proximity: {}, length: {}, data: {:02X?}",
+                                from_client, proximity, length, data
+                            );
+                        }
                         17 => {
                             // svc_Sounds
                             let reliable_sound = br.read_bit();
@@ -164,8 +210,51 @@ fn main() -> anyhow::Result<()> {
                             };
 
                             println!(
-                                "    svc_UserMessage: msg_type: {} ({type_name}), length: {}, data: {:02X?}",
-                                msg_type, length, data
+                                "    svc_UserMessage: msg_type: {msg_type} ({type_name}), length: {length}, data: {data:02X?}",
+                            );
+
+                            if type_name == "SayText2" {
+                                let mut ebr = BitReader::new(data);
+                                let client = ebr.read_bits(8);
+                                let wants_to_chat = ebr.read_bits(8) != 0;
+
+                                let msg_text =
+                                    String::from_utf8_lossy(&ebr.read_null_bytestring()?)
+                                        .to_string();
+                                let (player_name, chat_text, buf3, bu4) =
+                                    if ebr.bits_remaining() > 8 * 4 {
+                                        (
+                                            String::from_utf8_lossy(&ebr.read_null_bytestring()?)
+                                                .to_string(),
+                                            String::from_utf8_lossy(&ebr.read_null_bytestring()?)
+                                                .to_string(),
+                                            ebr.read_nullstring()?,
+                                            ebr.read_nullstring()?,
+                                        )
+                                    } else {
+                                        ("".into(), "".into(), "".into(), "".into())
+                                    };
+                                println!(
+                                    "      SayText2: client: {}, wants_to_chat: {}, msg_text: '{}', player_name: '{}', chat_text: '{}', buf3: '{}', bu4: '{}'",
+                                    client,
+                                    wants_to_chat,
+                                    strip_chat_color_codes(&msg_text),
+                                    player_name,
+                                    chat_text,
+                                    buf3,
+                                    bu4
+                                );
+                            }
+                        }
+                        24 => {
+                            // svc_EntityMessage
+                            let entity_index = br.read_bits(11);
+                            let class_id = br.read_bits(9);
+                            let length = br.read_bits(11);
+                            let data = br.read_bits_vec(length as usize);
+                            println!(
+                                "    svc_EntityMessage: entity_index: {}, class_id: {}, length: {}, data: {:02X?}",
+                                entity_index, class_id, length, data
                             );
                         }
                         25 => {
@@ -211,7 +300,7 @@ fn main() -> anyhow::Result<()> {
                             println!("    svc_Prefetch: sound_index: {}", sound_index);
                         }
                         _ => {
-                            println!("Unhandled cmd: {cmd}");
+                            panic!("Unhandled cmd: {cmd}");
                             break;
                         }
                     }
@@ -230,4 +319,40 @@ fn main() -> anyhow::Result<()> {
     }
 
     Ok(())
+}
+
+fn strip_chat_color_codes(s: &str) -> String {
+    const COLOR_NORMAL: u8 = 1;
+    const COLOR_USEOLDCOLORS: u8 = 2;
+    const COLOR_PLAYERNAME: u8 = 3;
+    const COLOR_LOCATION: u8 = 4;
+    const COLOR_ACHIEVEMENT: u8 = 5;
+    const COLOR_CUSTOM: u8 = 6; // Will use the most recently SetCustomColor()
+    const COLOR_HEXCODE: u8 = 7; // Reads the color from the next six characters
+    const COLOR_HEXCODE_ALPHA: u8 = 8; // Reads the color and alpha from the next eight characters
+
+    let mut result = String::with_capacity(s.len());
+    let mut chars = s.chars();
+    while let Some(c) = chars.next() {
+        if c as u8 >= COLOR_HEXCODE_ALPHA {
+            result.push(c);
+            continue;
+        }
+
+        if c as u8 >= COLOR_NORMAL {
+            if c as u8 == COLOR_HEXCODE {
+                for _ in 0..6 {
+                    chars.next();
+                }
+            } else if c as u8 == COLOR_HEXCODE_ALPHA {
+                for _ in 0..8 {
+                    chars.next();
+                }
+            }
+        } else {
+            result.push(c);
+        }
+    }
+
+    result
 }

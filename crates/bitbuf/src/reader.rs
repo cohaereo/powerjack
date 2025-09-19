@@ -28,6 +28,7 @@ pub trait ReaderExt {
     }
 
     fn read_string(&mut self, len: usize) -> std::io::Result<String>;
+    fn read_null_bytestring(&mut self) -> std::io::Result<Vec<u8>>;
     fn read_nullstring(&mut self) -> std::io::Result<String>;
 
     fn read_bytes(&mut self, len: usize) -> std::io::Result<Vec<u8>>;
@@ -66,7 +67,7 @@ impl<R: Read> ReaderExt for R {
             .to_owned())
     }
 
-    fn read_nullstring(&mut self) -> std::io::Result<String> {
+    fn read_null_bytestring(&mut self) -> std::io::Result<Vec<u8>> {
         let mut buf = Vec::new();
         loop {
             let byte = self.read_u8()?;
@@ -75,7 +76,12 @@ impl<R: Read> ReaderExt for R {
             }
             buf.push(byte);
         }
-        Ok(String::from_utf8_lossy(&buf).to_string())
+        Ok(buf)
+    }
+
+    fn read_nullstring(&mut self) -> std::io::Result<String> {
+        let bytes = self.read_null_bytestring()?;
+        Ok(String::from_utf8_lossy(&bytes).to_string())
     }
 
     fn read_bytes(&mut self, len: usize) -> std::io::Result<Vec<u8>> {
