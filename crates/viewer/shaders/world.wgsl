@@ -57,9 +57,9 @@ var r_basetexture: texture_2d<f32>;
 @binding(2)
 var r_basetexture2: texture_2d<f32>;
 
-// @group(1)
-// @binding(3)
-// var r_alphablend_texture: texture_2d<f32>;
+@group(1)
+@binding(3)
+var r_blendmodulate_texture: texture_2d<f32>;
 
 fn load_lightmap_texel(offset: u32) -> vec3<f32> {
     let v = r_lightmap[offset];
@@ -121,21 +121,34 @@ fn fs_main(vertex: VertexOutput) -> @location(0) vec4<f32> {
         light = sample_lightmap_bilinear(vertex.lightmap_texcoord, face);
     }
 
+    var blendFactor = vertex.color.a;
+
     var sample = vec4<f32>(1.0, 1.0, 1.0, 1.0);
-    // This surface uses 2 textures, blend them using vertex alpha
-        let sample1 = textureSampleLevel(
-            r_basetexture,
-            r_sampler_linear,
-            vertex.texcoord,
-            0.0
-        );
-        let sample2 = textureSampleLevel(
-            r_basetexture2,
-            r_sampler_linear,
-            vertex.texcoord,
-            0.0
-        );
-        sample = mix(sample1, sample2, vertex.color.a);
+    let blendModulateSample = textureSampleLevel(
+        r_blendmodulate_texture,
+        r_sampler_linear,
+        vertex.texcoord,
+        0.0
+    );
+    if(blendModulateSample.b == 0.0) {
+        let modMin = blendModulateSample.g - blendModulateSample.r;
+        let modMax = blendModulateSample.g + blendModulateSample.r;
+        blendFactor = smoothstep(modMin, modMax, vertex.color.a);
+    }
+
+    let sample1 = textureSampleLevel(
+        r_basetexture,
+        r_sampler_linear,
+        vertex.texcoord,
+        0.0
+    );
+    let sample2 = textureSampleLevel(
+        r_basetexture2,
+        r_sampler_linear,
+        vertex.texcoord,
+        0.0
+    );
+    sample = mix(sample1, sample2, blendFactor);
 
     // if(sample.a < 0.5) { discard; }
 

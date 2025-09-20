@@ -17,7 +17,7 @@ use crate::renderer::{
     iad::InstanceAdapterDevice,
     reloadable_pipeline::{ReloadablePipeline, ShaderSource},
     vmt::get_basetexture_for_vmt,
-    vtf::{create_fallback_texture, load_vtf},
+    vtf::{create_fallback_texture, create_single_color_texture, load_vtf},
 };
 
 pub struct BspStaticRenderer {
@@ -382,6 +382,16 @@ impl BspStaticRenderer {
                         },
                         count: None,
                     },
+                    wgpu::BindGroupLayoutEntry {
+                        binding: 3,
+                        visibility: wgpu::ShaderStages::FRAGMENT,
+                        ty: wgpu::BindingType::Texture {
+                            sample_type: wgpu::TextureSampleType::Float { filterable: true },
+                            view_dimension: wgpu::TextureViewDimension::D2,
+                            multisampled: false,
+                        },
+                        count: None,
+                    },
                 ],
             });
 
@@ -395,12 +405,14 @@ impl BspStaticRenderer {
             ..Default::default()
         });
 
+        let (_, white_texture) = create_single_color_texture(iad, [255, 255, 255]);
+
         let mut texture_bindgroups = vec![];
         for td in &bsp.tex_data {
             let name = &bsp.texdata_string_table[td.name_index as usize];
             let path = format!("MATERIALS/{name}");
-            let (view1, view2) = match get_basetexture_for_vmt(&renderer.fs, &path) {
-                Ok(Some((basetexture, basetexture2))) => {
+            let (view1, view2, view3) = match get_basetexture_for_vmt(&renderer.fs, &path) {
+                Ok(Some((basetexture, basetexture2, blendmodulatetexture))) => {
                     let path = format!("MATERIALS/{basetexture}");
                     let t1 = match load_vtf(&renderer.fs, iad, &path) {
                         Ok((_, view)) => view,
@@ -420,15 +432,29 @@ impl BspStaticRenderer {
                         }
                     });
 
-                    (t1, t2)
+                    let t3 = blendmodulatetexture.map(|blendmodulatetexture| {
+                        match load_vtf(
+                            &renderer.fs,
+                            iad,
+                            &format!("MATERIALS/{blendmodulatetexture}"),
+                        ) {
+                            Ok((_, view)) => view,
+                            Err(e) => {
+                                error!("Failed to load texture {path}: {e:?}");
+                                create_fallback_texture(iad, [255, 0, 255]).1
+                            }
+                        }
+                    });
+
+                    (t1, t2, t3)
                 }
                 Ok(None) => {
                     error!("VMT {path} not found");
-                    (create_fallback_texture(iad, [255, 0, 0]).1, None)
+                    (create_fallback_texture(iad, [255, 0, 0]).1, None, None)
                 }
                 Err(e) => {
                     error!("Failed to load VMT {path}: {e:?}");
-                    (create_fallback_texture(iad, [255, 0, 255]).1, None)
+                    (create_fallback_texture(iad, [255, 0, 255]).1, None, None)
                 }
             };
 
@@ -448,6 +474,12 @@ impl BspStaticRenderer {
                         binding: 2,
                         resource: wgpu::BindingResource::TextureView(
                             view2.as_ref().unwrap_or(&view1),
+                        ),
+                    },
+                    wgpu::BindGroupEntry {
+                        binding: 3,
+                        resource: wgpu::BindingResource::TextureView(
+                            view3.as_ref().unwrap_or(&white_texture),
                         ),
                     },
                 ],

@@ -7,7 +7,7 @@ use crate::{
 pub fn get_basetexture_for_vmt(
     fs: &SharedFilesystem,
     path: &str,
-) -> eyre::Result<Option<(String, Option<String>)>> {
+) -> eyre::Result<Option<(String, Option<String>, Option<String>)>> {
     let path = ensure_path_has_extension(path, "vmt");
     let data = fs.lock().read_path(&path)?;
     let Some(data) = data else {
@@ -25,12 +25,13 @@ pub fn get_basetexture_for_vmt(
         | Material::Water {
             normalmap: basetexture,
             ..
-        } => Ok(Some((basetexture, None))),
+        } => Ok(Some((basetexture, None, None))),
         Material::WorldVertexTransition {
             basetexture,
             basetexture2,
+            blendmodulatetexture,
             ..
-        } => Ok(Some((basetexture, basetexture2))),
+        } => Ok(Some((basetexture, basetexture2, blendmodulatetexture))),
         Material::Patch { include, .. } => get_basetexture_for_vmt(fs, &include),
     }
 }
@@ -64,6 +65,8 @@ pub enum Material {
         basetexture: String,
         #[serde(rename = "$basetexture2")]
         basetexture2: Option<String>,
+        #[serde(rename = "$blendmodulatetexture")]
+        blendmodulatetexture: Option<String>,
 
         #[serde(flatten)]
         remaining_properties: vdf_reader::entry::Entry,

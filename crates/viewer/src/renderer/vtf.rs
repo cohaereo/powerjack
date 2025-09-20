@@ -177,3 +177,33 @@ pub fn create_fallback_texture(
 
     (texture, texture_view)
 }
+
+pub fn create_single_color_texture(
+    iad: &InstanceAdapterDevice,
+    color: [u8; 3],
+) -> (wgpu::Texture, wgpu::TextureView) {
+    let data = vec![color[0], color[1], color[2], 255];
+    let texture = iad.create_texture_with_data(
+        &iad.queue,
+        &wgpu::TextureDescriptor {
+            label: Some("Single Color Texture"),
+            size: wgpu::Extent3d {
+                width: 1,
+                height: 1,
+                depth_or_array_layers: 1,
+            },
+            mip_level_count: 1,
+            sample_count: 1,
+            dimension: wgpu::TextureDimension::D2,
+            format: wgpu::TextureFormat::Rgba8UnormSrgb,
+            usage: wgpu::TextureUsages::TEXTURE_BINDING | wgpu::TextureUsages::COPY_DST,
+            view_formats: &[wgpu::TextureFormat::Rgba8UnormSrgb],
+        },
+        wgpu::wgt::TextureDataOrder::LayerMajor,
+        &data,
+    );
+
+    let texture_view = texture.create_view(&wgpu::TextureViewDescriptor::default());
+
+    (texture, texture_view)
+}
