@@ -8,7 +8,7 @@ use bitflags::bitflags;
 use bytemuck::{Pod, Zeroable};
 use eyre::Context;
 use glam::{IVec2, Mat4, Vec2, Vec3, Vec4, Vec4Swizzles, vec2};
-use powerjack_bsp::{Bsp, BspFile, lumps::BspFace};
+use powerjack_bsp::{Bsp, BspFile};
 use serde::Deserialize;
 use wgpu::util::DeviceExt;
 
@@ -29,7 +29,7 @@ pub struct BspStaticRenderer {
     lightmap_bindgroup: wgpu::BindGroup,
     texture_bindgroups: Vec<wgpu::BindGroup>,
 
-    faces: Vec<(Range<u32>, BspFace, usize)>,
+    draw_ranges: Vec<(Range<u32>, usize)>,
     pipeline: ReloadablePipeline,
     pub entities: Vec<vdf_reader::entry::Entry>,
 }
@@ -254,9 +254,20 @@ impl BspStaticRenderer {
             }
 
             let face_index_end = indices.len();
-            let draw_range = (face_index_start as u32)..(face_index_end as u32);
+            let draw_range = (face_index_start)..(face_index_end);
 
             faces.push((draw_range, f.clone(), ti.tex_data as usize));
+        }
+
+        let mut draw_ranges = Vec::with_capacity(bsp.tex_data.len());
+        let mut reordered_indices = Vec::with_capacity(indices.len());
+        for texdata in 0..bsp.tex_data.len() {
+            let draw_range_start = reordered_indices.len() as u32;
+            for (draw_range, _face, _texture) in faces.iter().filter(|(_, _, t)| *t == texdata) {
+                reordered_indices.extend_from_slice(&indices[draw_range.clone()]);
+            }
+            let draw_range_end = reordered_indices.len() as u32;
+            draw_ranges.push((draw_range_start..draw_range_end, texdata));
         }
 
         let vertex_buffer = iad.create_buffer_init(&wgpu::util::BufferInitDescriptor {
@@ -268,7 +279,7 @@ impl BspStaticRenderer {
         let index_buffer = iad.create_buffer_init(&wgpu::util::BufferInitDescriptor {
             label: Some("Static Map Geometry Index Buffer"),
             usage: wgpu::BufferUsages::INDEX,
-            contents: bytemuck::cast_slice(&indices),
+            contents: bytemuck::cast_slice(&reordered_indices),
         });
 
         let mut lightmap_data = bsp
@@ -547,13 +558,19 @@ impl BspStaticRenderer {
             entities.push(e);
         }
 
+        println!(
+            "{} draw ranges, {} texdatas",
+            draw_ranges.len(),
+            texture_bindgroups.len()
+        );
+
         Ok(Self {
             data: bsp,
             vertex_buffer,
             index_buffer,
             lightmap_bindgroup,
             texture_bindgroups,
-            faces,
+            draw_ranges,
             pipeline,
             entities,
         })
@@ -575,7 +592,7 @@ impl BspStaticRenderer {
         pass.set_vertex_buffer(0, self.vertex_buffer.slice(..));
         pass.set_index_buffer(self.index_buffer.slice(..), wgpu::IndexFormat::Uint32);
 
-        for (draw_range, _face, texture_bindgroup) in &self.faces {
+        for (draw_range, texture_bindgroup) in &self.draw_ranges {
             pass.set_bind_group(1, &self.texture_bindgroups[*texture_bindgroup], &[]);
             pass.draw_indexed(draw_range.clone(), 0, 0..1);
         }
