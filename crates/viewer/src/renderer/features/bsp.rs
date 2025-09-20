@@ -1,7 +1,6 @@
 use std::{
     f32,
     io::{Read, Seek},
-    num::NonZeroU32,
     ops::Range,
 };
 
@@ -26,12 +25,11 @@ pub struct BspStaticRenderer {
 
     vertex_buffer: wgpu::Buffer,
     index_buffer: wgpu::Buffer,
-    index_count: u32,
 
     lightmap_bindgroup: wgpu::BindGroup,
-    texture_bindgroup: wgpu::BindGroup,
+    texture_bindgroups: Vec<wgpu::BindGroup>,
 
-    faces: Vec<(Range<u32>, BspFace)>,
+    faces: Vec<(Range<u32>, BspFace, usize)>,
     pipeline: ReloadablePipeline,
     pub entities: Vec<vdf_reader::entry::Entry>,
 }
@@ -44,52 +42,6 @@ impl BspStaticRenderer {
         let bsp = Bsp::parse(&mut file)?;
         let pakfile = file.read_lump_raw(40)?;
         renderer.fs.lock().mount_zip(pakfile)?;
-
-        let mut textures = Vec::new();
-        let mut texdata_to_indices: Vec<(u16, Option<u16>)> = vec![];
-        for td in &bsp.tex_data {
-            let name = &bsp.texdata_string_table[td.name_index as usize];
-            let path = format!("MATERIALS/{name}");
-            let (view1, view2) = match get_basetexture_for_vmt(&renderer.fs, &path) {
-                Ok(Some((basetexture, basetexture2))) => {
-                    let path = format!("MATERIALS/{basetexture}");
-                    let t1 = match load_vtf(&renderer.fs, iad, &path) {
-                        Ok((_, view)) => view,
-                        Err(e) => {
-                            error!("Failed to load texture {path}: {e:?}");
-                            create_fallback_texture(iad, [255, 0, 255]).1
-                        }
-                    };
-
-                    let t2 = basetexture2.map(|basetexture2| {
-                        match load_vtf(&renderer.fs, iad, &format!("MATERIALS/{basetexture2}")) {
-                            Ok((_, view)) => view,
-                            Err(e) => {
-                                error!("Failed to load texture {path}: {e:?}");
-                                create_fallback_texture(iad, [255, 0, 255]).1
-                            }
-                        }
-                    });
-
-                    (t1, t2)
-                }
-                Ok(None) => {
-                    error!("VMT {path} not found");
-                    (create_fallback_texture(iad, [255, 0, 0]).1, None)
-                }
-                Err(e) => {
-                    error!("Failed to load VMT {path}: {e:?}");
-                    (create_fallback_texture(iad, [255, 0, 255]).1, None)
-                }
-            };
-
-            let offset = textures.len() as u16;
-            texdata_to_indices.push((offset, view2.is_some().then_some(offset + 1)));
-            textures.push(view1);
-            if let Some(view2) = view2 {
-                textures.push(view2);
-            }
-        }
 
         let mut gpu_faces = Vec::with_capacity(bsp.faces.len());
         let mut face_vertices: Vec<StaticMapVertex> = vec![];
@@ -118,21 +70,13 @@ impl BspStaticRenderer {
             );
             let lightmap_face_size = IVec2::from(f.lightmap_size) + IVec2::ONE;
             {
-                let (ti1, ti2) = texdata_to_indices[ti.tex_data as usize];
                 gpu_faces.push(GpuMapFace {
                     lightmap_face_size_packed: (lightmap_face_size.x as u32 & 0xFFFF) << 16
                         | (lightmap_face_size.y as u32 & 0xFFFF),
                     lightmap_offset: f.lightmap_data_offset / 4,
                     flags,
-                    texture_index: ti1 as u32
-                        | ti2.map(|t| (t as u32) << 16).unwrap_or(0xFFFF << 16),
                 });
             }
-
-            // if f.disp_info != -1 {
-            //     let gf = gpu_faces.last_mut().unwrap();
-            //     gf.lightmap_offset += (lightmap_face_size.x * lightmap_face_size.y) * 1;
-            // }
 
             let color = Vec3::from([
                 td.reflectivity[0].sqrt(),
@@ -143,16 +87,8 @@ impl BspStaticRenderer {
 
             // First vertex for this face
             let face_data_start = face_vertices.len();
-            // let mut add_vert = |v: Vec3, n: Vec3| {
-            //     face_vertices.push(StaticMapVertex::new(
-            //         v,
-            //         n,
-            //         Vec2::ZERO,
-            //         Vec2::ZERO,
-            //         color,
-            //         fi as u32,
-            //     ));
-            // };
+
+            let face_index_start = indices.len();
 
             macro_rules! add_vert {
                 ($v:expr, $luv:expr, $alpha:expr, $n:expr) => {
@@ -288,11 +224,6 @@ impl BspStaticRenderer {
 
                     i += 3;
                 }
-                // warn!(
-                //     "Can't handle a face with more/less than 4 vertices (has {})",
-                //     face.len()
-                // );
-                // }
             }
 
             for v in &mut face_vertices[face_data_start..] {
@@ -322,10 +253,10 @@ impl BspStaticRenderer {
                 }
             }
 
-            let face_data_end = face_vertices.len();
-            let draw_range = (face_data_start as u32)..(face_data_end as u32);
+            let face_index_end = indices.len();
+            let draw_range = (face_index_start as u32)..(face_index_end as u32);
 
-            faces.push((draw_range, f.clone()));
+            faces.push((draw_range, f.clone(), ti.tex_data as usize));
         }
 
         let vertex_buffer = iad.create_buffer_init(&wgpu::util::BufferInitDescriptor {
@@ -428,17 +359,27 @@ impl BspStaticRenderer {
                     wgpu::BindGroupLayoutEntry {
                         binding: 0,
                         visibility: wgpu::ShaderStages::FRAGMENT,
+                        ty: wgpu::BindingType::Sampler(wgpu::SamplerBindingType::Filtering),
+                        count: None,
+                    },
+                    wgpu::BindGroupLayoutEntry {
+                        binding: 1,
+                        visibility: wgpu::ShaderStages::FRAGMENT,
                         ty: wgpu::BindingType::Texture {
                             sample_type: wgpu::TextureSampleType::Float { filterable: true },
                             view_dimension: wgpu::TextureViewDimension::D2,
                             multisampled: false,
                         },
-                        count: NonZeroU32::new(textures.len() as u32),
+                        count: None,
                     },
                     wgpu::BindGroupLayoutEntry {
-                        binding: 1,
+                        binding: 2,
                         visibility: wgpu::ShaderStages::FRAGMENT,
-                        ty: wgpu::BindingType::Sampler(wgpu::SamplerBindingType::Filtering),
+                        ty: wgpu::BindingType::Texture {
+                            sample_type: wgpu::TextureSampleType::Float { filterable: true },
+                            view_dimension: wgpu::TextureViewDimension::D2,
+                            multisampled: false,
+                        },
                         count: None,
                     },
                 ],
@@ -454,21 +395,64 @@ impl BspStaticRenderer {
             ..Default::default()
         });
 
-        let texture_views = textures.iter().collect::<Vec<_>>();
-        let texture_bindgroup = iad.create_bind_group(&wgpu::BindGroupDescriptor {
-            label: None,
-            layout: &texture_bindgroup_layout,
-            entries: &[
-                wgpu::BindGroupEntry {
-                    binding: 0,
-                    resource: wgpu::BindingResource::TextureViewArray(&texture_views),
-                },
-                wgpu::BindGroupEntry {
-                    binding: 1,
-                    resource: wgpu::BindingResource::Sampler(&sampler),
-                },
-            ],
-        });
+        let mut texture_bindgroups = vec![];
+        for td in &bsp.tex_data {
+            let name = &bsp.texdata_string_table[td.name_index as usize];
+            let path = format!("MATERIALS/{name}");
+            let (view1, view2) = match get_basetexture_for_vmt(&renderer.fs, &path) {
+                Ok(Some((basetexture, basetexture2))) => {
+                    let path = format!("MATERIALS/{basetexture}");
+                    let t1 = match load_vtf(&renderer.fs, iad, &path) {
+                        Ok((_, view)) => view,
+                        Err(e) => {
+                            error!("Failed to load texture {path}: {e:?}");
+                            create_fallback_texture(iad, [255, 0, 255]).1
+                        }
+                    };
+
+                    let t2 = basetexture2.map(|basetexture2| {
+                        match load_vtf(&renderer.fs, iad, &format!("MATERIALS/{basetexture2}")) {
+                            Ok((_, view)) => view,
+                            Err(e) => {
+                                error!("Failed to load texture {path}: {e:?}");
+                                create_fallback_texture(iad, [255, 0, 255]).1
+                            }
+                        }
+                    });
+
+                    (t1, t2)
+                }
+                Ok(None) => {
+                    error!("VMT {path} not found");
+                    (create_fallback_texture(iad, [255, 0, 0]).1, None)
+                }
+                Err(e) => {
+                    error!("Failed to load VMT {path}: {e:?}");
+                    (create_fallback_texture(iad, [255, 0, 255]).1, None)
+                }
+            };
+
+            texture_bindgroups.push(iad.create_bind_group(&wgpu::BindGroupDescriptor {
+                label: None,
+                layout: &texture_bindgroup_layout,
+                entries: &[
+                    wgpu::BindGroupEntry {
+                        binding: 0,
+                        resource: wgpu::BindingResource::Sampler(&sampler),
+                    },
+                    wgpu::BindGroupEntry {
+                        binding: 1,
+                        resource: wgpu::BindingResource::TextureView(&view1),
+                    },
+                    wgpu::BindGroupEntry {
+                        binding: 2,
+                        resource: wgpu::BindingResource::TextureView(
+                            view2.as_ref().unwrap_or(&view1),
+                        ),
+                    },
+                ],
+            }));
+        }
 
         let pipeline_layout = iad.create_pipeline_layout(&wgpu::PipelineLayoutDescriptor {
             label: None,
@@ -535,9 +519,8 @@ impl BspStaticRenderer {
             data: bsp,
             vertex_buffer,
             index_buffer,
-            index_count: indices.len() as u32,
             lightmap_bindgroup,
-            texture_bindgroup,
+            texture_bindgroups,
             faces,
             pipeline,
             entities,
@@ -552,7 +535,6 @@ impl BspStaticRenderer {
     ) {
         pass.set_pipeline(&self.pipeline.compiled_pipeline(iad));
         pass.set_bind_group(0, &self.lightmap_bindgroup, &[]);
-        pass.set_bind_group(1, &self.texture_bindgroup, &[]);
         pass.set_push_constants(
             wgpu::ShaderStages::VERTEX,
             0,
@@ -561,10 +543,10 @@ impl BspStaticRenderer {
         pass.set_vertex_buffer(0, self.vertex_buffer.slice(..));
         pass.set_index_buffer(self.index_buffer.slice(..), wgpu::IndexFormat::Uint32);
 
-        pass.draw_indexed(0..self.index_count, 0, 0..1);
-        // for (draw_range, _face) in &self.faces {
-        //     pass.draw_indexed(draw_range.clone(), 0, 0..1);
-        // }
+        for (draw_range, _face, texture_bindgroup) in &self.faces {
+            pass.set_bind_group(1, &self.texture_bindgroups[*texture_bindgroup], &[]);
+            pass.draw_indexed(draw_range.clone(), 0, 0..1);
+        }
     }
 }
 
@@ -621,7 +603,7 @@ pub struct GpuMapFace {
     pub lightmap_face_size_packed: u32,
     pub lightmap_offset: i32,
     pub flags: FaceFlags,
-    pub texture_index: u32,
+    // pub texture_index: u32,
 }
 
 bitflags! {
