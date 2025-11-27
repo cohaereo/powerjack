@@ -5,7 +5,7 @@ use std::fs::File;
 use std::io::{Read, Seek, SeekFrom};
 use std::path::Path;
 
-use crate::structs::{VpkDirectoryEntry, VpkHeader};
+use crate::structs::{VpkDirectoryEntry, VpkHeaderV1};
 
 mod structs;
 
@@ -14,7 +14,6 @@ type ExtensionMap<V> = CaseInsensitiveHashMap<V>;
 
 pub struct VpkFile<R: Read + Seek> {
     reader: R,
-    pub header: VpkHeader,
     /// Maps file extensions to a list of paths
     pub directory: ExtensionMap<PathMap<VpkDirectoryEntry>>,
 
@@ -24,11 +23,23 @@ pub struct VpkFile<R: Read + Seek> {
 impl<R: Read + Seek> VpkFile<R> {
     /// If filename is not given, you will not be able to read non-preload files through this struct
     pub fn new(mut reader: R, filename: Option<String>) -> eyre::Result<Self> {
-        let header = reader.read_le::<VpkHeader>()?;
+        reader.seek(SeekFrom::Start(4))?;
+        let version = reader
+            .read_le::<u32>()
+            .context("Failed to read VPK version")?;
+        reader.seek(SeekFrom::Start(0))?;
+        match version {
+            1 => {
+                _ = reader.read_le::<VpkHeaderV1>();
+            }
+            2 => {
+                _ = reader.read_le::<structs::VpkHeaderV2>();
+            }
+            _ => eyre::bail!("Unsupported VPK version: {}", version),
+        }
         Ok(Self {
             directory: Self::read_directory(&mut reader).context("Failed to read VPK directory")?,
             reader,
-            header,
             dir_path: filename,
         })
     }

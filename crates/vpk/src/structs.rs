@@ -2,8 +2,18 @@ use binrw::BinRead;
 
 #[derive(BinRead)]
 #[br(magic = b"\x34\x12\xAA\x55")]
-pub struct VpkHeader {
-    #[br(assert(version == 2, "VPK version must be 2 (v1 is not supported)"))]
+pub struct VpkHeaderV1 {
+    #[br(assert(version == 1, "VPK version must be 1"))]
+    pub version: u32,
+
+    /// The size, in bytes, of the directory tree
+    pub tree_size: u32,
+} // Total size: 12
+
+#[derive(BinRead)]
+#[br(magic = b"\x34\x12\xAA\x55")]
+pub struct VpkHeaderV2 {
+    #[br(assert(version == 2, "VPK version must be 2"))]
     pub version: u32,
 
     /// The size, in bytes, of the directory tree
