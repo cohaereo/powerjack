@@ -11,7 +11,7 @@ use std::io::{Read, Seek};
 #[br(magic = b"IDST")]
 #[derive(Debug, Clone)]
 pub struct StudioHeader {
-    #[br(assert((44..=48).contains(&version)))]
+    #[br(assert((44..=49).contains(&version), "Unsupported MDL version v{version}"))]
     pub version: u32,
     pub checksum: u32,
 
