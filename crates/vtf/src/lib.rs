@@ -10,7 +10,7 @@ pub struct VtfResourceDictionary {
 #[derive(BinRead, Debug)]
 #[br(magic = b"VTF\0")]
 pub struct VtfHeader {
-    #[br(assert(version[0] == 7 && version[1] <= 4, "Version must be between 7.0 and 7.4"))]
+    #[br(assert(version[0] == 7 && version[1] <= 5, "Version must be between 7.0 and 7.5 (got {}.{})", version[0], version[1]))]
     pub version: [u32; 2],
     /// Size of the header struct  (16 byte aligned; currently 80 bytes) + size of the resources dictionary (7.3+).
     pub header_size: u32,
