@@ -1,0 +1,65 @@
+import { Button, VerticalBox, Slider, HorizontalBox, GridBox } from "std-widgets.slint";
+import { ClassPortrait, Class } from "class-portrait.slint";
+import { DemoTile, AttributeKind } from "demo-tile.slint";
+
+export component AppWindow inherits Window {
+    GridLayout {
+
+        DemoTile {
+            background_image: @image-url("images/maps/pl_borneo.jpg");
+            primary_class: Class.engineer;
+            map_name: "pl_borneo";
+            time_played: "1h 35m";
+            num_friends: 1;
+            kd_ratio: "∞ K/D";
+            date: "2 days ago";
+
+            attributes: [
+                { kind: AttributeKind.excellent, text: "No Deaths" },
+                { kind: AttributeKind.positive, text: "MVP #3" },
+            ];
+        }
+
+        DemoTile {
+            background_image: @image-url("images/maps/pl_badwater.jpg");
+            primary_class: Class.soldier;
+            map_name: "pl_badwater";
+            time_played: "20m";
+            num_friends: 0;
+            kd_ratio: "0.2 K/D";
+            date: "3 days ago";
+
+            attributes: [
+                { kind: AttributeKind.negative, text: "Left mid-game" },
+                { kind: AttributeKind.negative, text: "Most Deaths" },
+            ];
+        }
+
+        DemoTile {
+            background_image: @image-url("images/maps/unknown.jpg");
+            primary_class: Class.demoman;
+            map_name: "koth_someunknownmap";
+            time_played: "43m";
+            num_friends: 0;
+            kd_ratio: "5.0 K/D";
+            date: "3 days ago";
+            row: 1;
+
+            attributes: [
+                { kind: AttributeKind.excellent, text: "MVP #1" },
+                { kind: AttributeKind.negative, text: "Auto-balanced" },
+            ];
+        }
+
+        // Failed parse
+        DemoTile {
+            background_image: @image-url("images/maps/pl_upward.jpg");
+            primary_class: Class.random;
+            map_name: "pl_upward";
+            time_played: "20m";
+            num_friends: 0;
+            kd_ratio: "";
+            date: "3 days ago";
+        }
+    }
+}

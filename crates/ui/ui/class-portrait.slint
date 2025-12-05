@@ -1,0 +1,66 @@
+export enum Class {
+    scout,
+    soldier,
+    pyro,
+    demoman,
+    heavy,
+    engineer,
+    medic,
+    sniper,
+    spy,
+    random
+}
+
+export component ClassPortrait inherits HorizontalLayout {
+    in property <Class> class: Class.random;
+//    in property <float> darken: 0.0;
+    in property <float> size: 1.0;
+    property <image> portrait;
+
+    width: 164px * size;
+
+    init => {
+        if (class == Class.scout) {
+            self.portrait = @image-url("images/classes/scout.png");
+        } else if (class == Class.soldier) {
+            self.portrait = @image-url("images/classes/soldier.png");
+        } else if (class == Class.pyro) {
+            self.portrait = @image-url("images/classes/pyro.png");
+        } else if (class == Class.demoman) {
+            self.portrait = @image-url("images/classes/demoman.png");
+        } else if (class == Class.heavy) {
+            self.portrait = @image-url("images/classes/heavy.png");
+        } else if (class == Class.engineer) {
+            self.portrait = @image-url("images/classes/engineer.png");
+        } else if (class == Class.medic) {
+            self.portrait = @image-url("images/classes/medic.png");
+        } else if (class == Class.sniper) {
+            self.portrait = @image-url("images/classes/sniper.png");
+        } else if (class == Class.spy) {
+            self.portrait = @image-url("images/classes/spy.png");
+        } else {
+            self.portrait = @image-url("images/classes/random.png");
+        }
+    }
+
+    spacing: -self.width;
+
+//    Image {
+//        source: portrait;
+//        width: parent.width;
+//        height: 247px;
+//        image-fit: ImageFit.contain;
+//        colorize: black;
+//    }
+    Image {
+        source: portrait;
+        width: parent.width;
+        height: 247px;
+        image-fit: ImageFit.contain;
+        opacity: 1.0;
+    }
+
+//    source-clip-x: 180;
+//    source-clip-width: 512;
+//    source-clip-height: 512;
+}
