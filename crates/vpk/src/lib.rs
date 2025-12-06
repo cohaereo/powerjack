@@ -11,6 +11,10 @@ mod structs;
 
 type PathMap<V> = CaseInsensitiveHashMap<V>;
 type ExtensionMap<V> = CaseInsensitiveHashMap<V>;
+#[derive(Debug)]
+pub struct VpkDirectoryPath {
+    pub files: CaseInsensitiveHashMap<(VpkDirectoryEntry, Vec<u8>)>,
+}
 
 pub struct VpkFile<R: Read + Seek> {
     reader: R,
@@ -78,10 +82,11 @@ impl<R: Read + Seek> VpkFile<R> {
                         .read_le::<VpkDirectoryEntry>()
                         .context("Failed to read directory entry")?;
 
-                    // Skip the preload bytes, if any
-                    r.seek(SeekFrom::Current(entry.preload_bytes as i64))?;
+                    let mut preload_bytes = vec![0u8; entry.preload_bytes as usize];
+                    r.read_exact(&mut preload_bytes)
+                        .context("Failed to read preload bytes")?;
 
-                    paths.insert(format!("{path}/{filename}"), entry);
+                    path_files.insert(filename, (entry, preload_bytes));
                 }
             }
 
@@ -120,8 +125,16 @@ impl<R: Read + Seek> VpkFile<R> {
             return Ok(None);
         };
 
-        if entry.is_preload() {
-            eyre::bail!("Preload files are not supported");
+        let Some((entry, preload_bytes)) = path.files.get(
+            filename
+                .to_str()
+                .ok_or_eyre("Failed to convert filename to string")?,
+        ) else {
+            return Ok(None);
+        };
+
+        if entry.is_preload() && entry.entry_length == 0 {
+            return Ok(Some(preload_bytes.clone()));
         }
 
         let archive_path = self
@@ -132,8 +145,11 @@ impl<R: Read + Seek> VpkFile<R> {
 
         let mut archive_file = File::open(&archive_path)?;
         archive_file.seek(SeekFrom::Start(entry.entry_offset as u64))?;
-        let mut data = vec![0; entry.entry_length as usize];
-        archive_file.read_exact(&mut data)?;
+        let mut data = vec![0; entry.preload_bytes as usize + entry.entry_length as usize];
+        archive_file.read_exact(&mut data[entry.preload_bytes as usize..])?;
+        if entry.is_preload() {
+            data[..entry.preload_bytes as usize].copy_from_slice(preload_bytes);
+        }
 
         Ok(Some(data))
     }
