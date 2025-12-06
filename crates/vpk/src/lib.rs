@@ -11,15 +11,11 @@ mod structs;
 
 type PathMap<V> = CaseInsensitiveHashMap<V>;
 type ExtensionMap<V> = CaseInsensitiveHashMap<V>;
-#[derive(Debug)]
-pub struct VpkDirectoryPath {
-    pub files: CaseInsensitiveHashMap<(VpkDirectoryEntry, Vec<u8>)>,
-}
 
 pub struct VpkFile<R: Read + Seek> {
     reader: R,
     /// Maps file extensions to a list of paths
-    pub directory: ExtensionMap<PathMap<VpkDirectoryEntry>>,
+    pub directory: ExtensionMap<PathMap<(VpkDirectoryEntry, Vec<u8>)>>,
 
     dir_path: Option<String>,
 }
@@ -48,7 +44,9 @@ impl<R: Read + Seek> VpkFile<R> {
         })
     }
 
-    fn read_directory(r: &mut R) -> eyre::Result<ExtensionMap<PathMap<VpkDirectoryEntry>>> {
+    fn read_directory(
+        r: &mut R,
+    ) -> eyre::Result<ExtensionMap<PathMap<(VpkDirectoryEntry, Vec<u8>)>>> {
         let mut directory = ExtensionMap::with_capacity_and_hasher(32, Default::default());
         loop {
             let extension = r
@@ -59,7 +57,7 @@ impl<R: Read + Seek> VpkFile<R> {
                 break;
             }
 
-            let mut paths = PathMap::with_capacity(4096);
+            let mut path_files = PathMap::with_capacity(4096);
             loop {
                 let path = r
                     .read_le::<NullString>()
@@ -73,7 +71,8 @@ impl<R: Read + Seek> VpkFile<R> {
                     let filename = r
                         .read_le::<NullString>()
                         .context("Failed to read directory filename string")?
-                        .to_string();
+                        .to_string()
+                        .to_lowercase();
                     if filename.is_empty() {
                         break;
                     }
@@ -86,19 +85,19 @@ impl<R: Read + Seek> VpkFile<R> {
                     r.read_exact(&mut preload_bytes)
                         .context("Failed to read preload bytes")?;
 
-                    path_files.insert(filename, (entry, preload_bytes));
+                    path_files.insert(format!("{path}/{filename}"), (entry, preload_bytes));
                 }
             }
 
-            paths.shrink_to_fit();
-            directory.insert(extension, paths);
+            path_files.shrink_to_fit();
+            directory.insert(extension, path_files);
         }
 
         Ok(directory)
     }
 
     pub fn read_data_from_path(&mut self, path: impl AsRef<str>) -> eyre::Result<Option<Vec<u8>>> {
-        let mut path = path.as_ref().replace("\\", "/");
+        let mut path = path.as_ref().replace("\\", "/").to_lowercase();
         // Eliminate double path separators
         while path.contains("//") {
             path = path.replace("//", "/");
@@ -116,19 +115,11 @@ impl<R: Read + Seek> VpkFile<R> {
         let Some(extension) = self.directory.get(extension) else {
             return Ok(None);
         };
-        let Some(entry) = extension.get(
+        let Some((entry, preload_bytes)) = extension.get(
             file_path
                 .as_os_str()
                 .to_str()
                 .ok_or_eyre("Failed to convert path to string")?,
-        ) else {
-            return Ok(None);
-        };
-
-        let Some((entry, preload_bytes)) = path.files.get(
-            filename
-                .to_str()
-                .ok_or_eyre("Failed to convert filename to string")?,
         ) else {
             return Ok(None);
         };

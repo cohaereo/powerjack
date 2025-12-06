@@ -14,7 +14,7 @@ pub struct BspFace {
     pub lightmap_data_offset: i32,
     pub area: f32,
     pub lightmap_mins: [i32; 2],
-    pub lightmap_size: [i32; 2],
+    pub lightmap_size: [u32; 2],
     pub orig_face: i32,
     pub num_primitives: u16,
     pub first_primitive: u16,

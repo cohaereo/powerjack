@@ -111,7 +111,7 @@ fn main() -> eyre::Result<()> {
         icon.width(),
         icon.height(),
         icon.width() * 4,
-        sdl3::pixels::PixelFormatEnum::ABGR8888.into(),
+        sdl3::pixels::PixelFormat::ABGR8888,
     )
     .context("Failed to create window icon")?;
     window.set_icon(window_icon);

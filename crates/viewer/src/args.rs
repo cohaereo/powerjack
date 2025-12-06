@@ -14,6 +14,6 @@ pub struct Args {
     pub mdl: Option<String>,
 
     /// Additional VPKs to mount in the virtual filesystem
-    #[clap(short, long)]
+    #[clap(long)]
     pub mount: Vec<String>,
 }

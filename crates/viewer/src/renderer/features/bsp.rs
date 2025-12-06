@@ -7,8 +7,8 @@ use std::{
 use bitflags::bitflags;
 use bytemuck::{Pod, Zeroable};
 use eyre::Context;
-use glam::{IVec2, Mat4, Vec2, Vec3, Vec4, Vec4Swizzles, vec2};
-use powerjack_bsp::{Bsp, BspFile};
+use glam::{Mat4, UVec2, Vec2, Vec3, Vec4, Vec4Swizzles, vec2};
+use powerjack_bsp::{Bsp, BspFile, lumps::BspFace};
 use serde::Deserialize;
 use wgpu::util::DeviceExt;
 
@@ -68,11 +68,11 @@ impl BspStaticRenderer {
                 FaceFlags::SKY3D,
                 texture.to_lowercase().ends_with("toolsskybox"),
             );
-            let lightmap_face_size = IVec2::from(f.lightmap_size) + IVec2::ONE;
+            let lightmap_face_size = UVec2::from(f.lightmap_size) + UVec2::ONE;
             {
                 gpu_faces.push(GpuMapFace {
-                    lightmap_face_size_packed: (lightmap_face_size.x as u32 & 0xFFFF) << 16
-                        | (lightmap_face_size.y as u32 & 0xFFFF),
+                    lightmap_face_size_packed: (lightmap_face_size.x & 0xFFFF) << 16
+                        | (lightmap_face_size.y & 0xFFFF),
                     lightmap_offset: f.lightmap_data_offset / 4,
                     flags,
                 });
