@@ -3,10 +3,11 @@
 mod analyzer;
 mod data;
 
-use chrono::{Datelike, TimeZone};
-use eframe::egui::{self, Color32, CornerRadius, Rect, RichText, Sense, Vec2, Widget, pos2, vec2};
-use powerjack_demo::DemoHeader;
-use std::{collections::HashMap, path::Path};
+use chrono::Datelike;
+use eframe::egui::{
+    self, Color32, CornerRadius, Rect, RichText, Sense, Spinner, Vec2, Widget, pos2, vec2,
+};
+use rayon::iter::{IntoParallelIterator, ParallelIterator};
 
 use crate::data::{AttributeKind, DemoData, find_demos, populate_demo_data};
 
@@ -25,31 +26,60 @@ fn main() {
     .expect("Failed to start eframe");
 }
 
-#[derive(Default)]
 struct PowerjackApp {
     demos: Vec<DemoData>,
+    demo_meta_rx: crossbeam_channel::Receiver<DemoData>,
+    demo_meta_thread: Option<std::thread::JoinHandle<()>>,
 }
 
 impl PowerjackApp {
     pub fn new(cc: &eframe::CreationContext<'_>) -> Self {
         let mut demos = find_demos();
-        populate_demo_data(&mut demos);
         // Sort by date descending
         demos.sort_by(|a, b| b.date.cmp(&a.date));
 
+        let (demo_meta_tx, demo_meta_rx) = crossbeam_channel::unbounded();
+        let demos_clone = demos.clone();
+        let demo_meta_thread = Some(std::thread::spawn(move || {
+            demos_clone.into_par_iter().for_each(|mut demo| {
+                populate_demo_data(&mut demo);
+                demo_meta_tx.send(demo).ok();
+            });
+        }));
+
         egui_extras::install_image_loaders(&cc.egui_ctx);
-        Self { demos }
+        Self {
+            demos,
+            demo_meta_rx,
+            demo_meta_thread,
+        }
+    }
+
+    fn process_demo_metadata(&mut self) {
+        while let Ok(demo) = self.demo_meta_rx.try_recv() {
+            if let Some(existing_demo) = self.demos.iter_mut().find(|d| d.path == demo.path) {
+                *existing_demo = demo;
+            }
+        }
     }
 }
 
 impl eframe::App for PowerjackApp {
     fn update(&mut self, ctx: &egui::Context, _frame: &mut eframe::Frame) {
+        self.process_demo_metadata();
+
         ctx.style_mut(|s| {
             s.interaction.selectable_labels = false;
         });
 
         egui::CentralPanel::default().show(ctx, |ui| {
             ui.heading("Powerjack Demo Viewer");
+            if self.demo_meta_thread.as_ref().map(|t| !t.is_finished()).unwrap_or(false) {
+                ui.horizontal(|ui| {
+                   ui.spinner();
+                   ui.label(format!("Loading demo metadata... ({} left)", self.demos.iter().filter(|d| !d.complete).count()));
+                });
+            }
 
             egui::ScrollArea::new([false, true]).auto_shrink([false, false]).show(ui, |ui| {
                 const COLUMN_WIDTH: f32 = 384.0;
@@ -130,80 +160,104 @@ impl eframe::App for PowerjackApp {
                                         egui::Color32::from_black_alpha(100),
                                     );
 
-                                    ui.scope_builder(
-                                        egui::UiBuilder::default().max_rect(img_rect),
-                                        |ui| {
-                                            ui.add_space(8.0);
+                                    if demo.complete {
+                                        ui.scope_builder(
+                                            egui::UiBuilder::default().max_rect(img_rect),
+                                            |ui| {
+                                                ui.add_space(8.0);
 
-                                            ui.horizontal_top(|ui| {
-                                                ui.add_space(12.0);
-                                                let class_name = format!("{:?}", demo.primary_class).to_lowercase();
-                                                let class_image_path = format!("file://images/classes/{}.png", class_name);
-                                                ui.image(class_image_path);
+                                                ui.horizontal_top(|ui| {
+                                                    ui.add_space(12.0);
+                                                    let class_name = format!("{:?}", demo.primary_class).to_lowercase();
+                                                    let class_image_path = format!("file://images/classes/{}.png", class_name);
+                                                    ui.image(class_image_path);
+                                                });
                                             });
-                                        });
 
 
-                                    let img_text_rect = img_rect.shrink2(vec2(16.0, 16.0)).with_min_y(img_rect.min.y + 8.0);
-                                    ui.scope_builder(
-                                        egui::UiBuilder::default().max_rect(img_text_rect),
-                                        |ui| {
-                                            ui.add_space(8.0);
+                                        let img_text_rect = img_rect.shrink2(vec2(16.0, 16.0)).with_min_y(img_rect.min.y + 8.0);
+                                        ui.scope_builder(
+                                            egui::UiBuilder::default().max_rect(img_text_rect),
+                                            |ui| {
+                                                ui.add_space(8.0);
 
-                                            ui.horizontal_top(|ui| {
-                                                // Use vertical layout with spacing to push content
-                                                ui.with_layout(egui::Layout::right_to_left(egui::Align::Min), |ui| {
-                                                    ui.vertical(|ui| {
-                                                        // Top-right stats
-                                                        ui.with_layout(egui::Layout::right_to_left(egui::Align::Min), |ui| {
-                                                            ui.label(
-                                                                RichText::new(format!("🕑 {}", demo.time_played))
-                                                                    .color(Color32::WHITE)
-                                                                    .font(egui::FontId::proportional(24.0)),
-                                                            );
-                                                        });
-                                                        if !demo.kd_ratio.is_empty() {
+                                                ui.horizontal_top(|ui| {
+                                                    // Use vertical layout with spacing to push content
+                                                    ui.with_layout(egui::Layout::right_to_left(egui::Align::Min), |ui| {
+                                                        ui.vertical(|ui| {
+                                                            // Top-right stats
                                                             ui.with_layout(egui::Layout::right_to_left(egui::Align::Min), |ui| {
                                                                 ui.label(
-                                                                    RichText::new(format!("🎯 {}", demo.kd_ratio))
+                                                                    RichText::new(format!("🕑 {}", demo.time_played))
                                                                         .color(Color32::WHITE)
                                                                         .font(egui::FontId::proportional(24.0)),
                                                                 );
                                                             });
-                                                        }
-                                                        if demo.num_friends > 0 {
-                                                            ui.with_layout(egui::Layout::right_to_left(egui::Align::Min), |ui| {
-                                                                ui.label(
-                                                                    RichText::new(format!("👥 {}", demo.num_friends))
-                                                                        .color(Color32::from_rgb(64, 255, 64))
-                                                                        .font(egui::FontId::proportional(24.0)),
-                                                                );
-                                                            });
-                                                        }
+                                                            if !demo.kd_ratio.is_empty() {
+                                                                ui.with_layout(egui::Layout::right_to_left(egui::Align::Min), |ui| {
+                                                                    ui.label(
+                                                                        RichText::new(format!("🎯 {}", demo.kd_ratio))
+                                                                            .color(Color32::WHITE)
+                                                                            .font(egui::FontId::proportional(24.0)),
+                                                                    );
+                                                                });
+                                                            }
+                                                            if demo.num_friends > 0 {
+                                                                ui.with_layout(egui::Layout::right_to_left(egui::Align::Min), |ui| {
+                                                                    ui.label(
+                                                                        RichText::new(format!("👥 {}", demo.num_friends))
+                                                                            .color(Color32::from_rgb(64, 255, 64))
+                                                                            .font(egui::FontId::proportional(24.0)),
+                                                                    );
+                                                                });
+                                                            }
 
-                                                        // Add flexible space to push attributes to bottom
-                                                        ui.add_space(ui.available_height() - (demo.attributes.len() as f32 * 20.0));
+                                                            // Add flexible space to push attributes to bottom
+                                                            ui.add_space(ui.available_height() - (demo.attributes.len() as f32 * 20.0));
 
-                                                        // Bottom-right attributes
-                                                        for attr in &demo.attributes {
-                                                            let (prefix, color) = match attr.kind {
-                                                                AttributeKind::Excellent => ("⭐", Color32::GOLD),
-                                                                AttributeKind::Positive => ("👍", Color32::GREEN),
-                                                                AttributeKind::Negative => ("👎", Color32::LIGHT_RED),
-                                                            };
-                                                            ui.with_layout(egui::Layout::right_to_left(egui::Align::Min), |ui| {
-                                                                ui.label(
-                                                                    RichText::new(format!("{} {}", prefix, attr.text))
-                                                                        .color(color)
-                                                                        .font(egui::FontId::proportional(16.0)).strong(),
-                                                                );
-                                                            });
-                                                        }
+                                                            // Bottom-right attributes
+                                                            for attr in &demo.attributes {
+                                                                let (prefix, color) = match attr.kind {
+                                                                    AttributeKind::Excellent => ("⭐", Color32::GOLD),
+                                                                    AttributeKind::Positive => ("👍", Color32::GREEN),
+                                                                    AttributeKind::Negative => ("👎", Color32::LIGHT_RED),
+                                                                };
+                                                                ui.with_layout(egui::Layout::right_to_left(egui::Align::Min), |ui| {
+                                                                    ui.label(
+                                                                        RichText::new(format!("{} {}", prefix, attr.text))
+                                                                            .color(color)
+                                                                            .font(egui::FontId::proportional(16.0)).strong(),
+                                                                    );
+                                                                });
+                                                            }
+                                                        });
                                                     });
                                                 });
-                                            });
-                                        },
-                                    );
+                                            },
+                                        );
+                                    }
+
+                                    let card_rect = img_rect.union(subtitle_rect);
+                                    if !demo.complete {
+                                        ui.painter().rect_filled(
+                                            card_rect,
+                                            CornerRadius {
+                                                ne: 16,
+                                                nw: 16,
+                                                se: 16,
+                                                sw: 16,
+                                            },
+                                            egui::Color32::from_black_alpha(150),
+                                        );
+
+
+                                        ui.scope_builder(
+                                            egui::UiBuilder::default().max_rect(Rect::from_center_size(card_rect.center(), vec2(32.0, 64.0))),
+                                            |ui| {
+                                                Spinner::new().size(32.0).ui(ui)
+                                            },
+                                        );
+                                    }
                                 });
                             });
 

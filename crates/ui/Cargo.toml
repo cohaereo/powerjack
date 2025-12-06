@@ -25,6 +25,7 @@ rayon = "1.11.0"
 tf-demo-parser = "0.6.4"
 chroma-dbg = "0.2.1"
 opener = "0.8.3"
+crossbeam-channel = "0.5.15"
 
 #slint = { version = "1.14.1", default-features = false, features = [
 #    "compat-1-2",

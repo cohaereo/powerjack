@@ -12,6 +12,7 @@ use crate::analyzer::DemoAnalyzer;
 #[derive(Clone)]
 pub struct DemoData {
     pub header: DemoHeader,
+    pub complete: bool,
 
     pub path: PathBuf,
     pub attributes: Vec<Attribute>,
@@ -120,7 +121,7 @@ pub fn find_demos() -> Vec<DemoData> {
                     .unwrap_or_else(chrono::Local::now),
             };
 
-            let now = chrono::Local::now();
+            // let now = chrono::Local::now();
             // if now - date > chrono::Duration::days(2) {
             //     // skip demos older than a week
             //     continue;
@@ -129,6 +130,7 @@ pub fn find_demos() -> Vec<DemoData> {
             match DemoHeader::read(&mut file) {
                 Ok(header) => {
                     demos.push(DemoData {
+                        complete: false,
                         path: path.clone(),
                         attributes: vec![],
                         date,
@@ -169,64 +171,56 @@ fn format_time(seconds: f32) -> String {
     }
 }
 
-pub fn populate_demo_data(demos: &mut [DemoData]) {
-    demos.par_iter_mut().for_each(|data| {
-        let demo_raw = std::fs::read(&data.path).expect("Failed to read demo file");
-        let demo = Demo::new(&demo_raw);
-        let parser = DemoParser::new_all_with_analyser(demo.get_stream(), DemoAnalyzer::default());
-        let (_header, state) = parser.parse().expect("Failed to parse demo");
+pub fn populate_demo_data(data: &mut DemoData) {
+    let demo_raw = std::fs::read(&data.path).expect("Failed to read demo file");
+    let demo = Demo::new(&demo_raw);
+    let parser = DemoParser::new_all_with_analyser(demo.get_stream(), DemoAnalyzer::default());
+    let (_header, state) = parser.parse().expect("Failed to parse demo");
 
-        let Some((_, player)) = state
-            .players
-            .iter()
-            .find(|(_, u)| u.name == data.header.client_name)
-        else {
-            println!(
-                "Could not find user info for player {}",
-                data.header.client_name
-            );
-            return;
-        };
+    let Some((_, player)) = state
+        .players
+        .iter()
+        .find(|(_, u)| u.name == data.header.client_name)
+    else {
+        println!(
+            "Could not find user info for player {}",
+            data.header.client_name
+        );
+        return;
+    };
 
-        data.primary_class = player.most_played_class();
+    data.primary_class = player.most_played_class();
 
-        let kd = if player.deaths > 0 {
-            player.kills as f32 / player.deaths as f32
-        } else {
-            player.kills as f32
-        };
-        data.kd_ratio = format!("{:.1} K/D", kd);
+    let kd = if player.deaths > 0 {
+        player.kills as f32 / player.deaths as f32
+    } else {
+        player.kills as f32
+    };
+    data.kd_ratio = format!("{:.1} K/D", kd);
 
-        if player.deaths == 0 {
-            data.attributes.push(Attribute {
-                kind: AttributeKind::Excellent,
-                text: "No Deaths".to_string(),
-            });
-        }
+    if player.deaths == 0 {
+        data.attributes.push(Attribute {
+            kind: AttributeKind::Excellent,
+            text: "No Deaths".to_string(),
+        });
+    }
 
-        if kd >= 5.0 {
-            data.attributes.push(Attribute {
-                kind: AttributeKind::Excellent,
-                text: "High K/D Ratio".to_string(),
-            });
-        } else if kd >= 3.0 {
-            data.attributes.push(Attribute {
-                kind: AttributeKind::Positive,
-                text: "Good K/D Ratio".to_string(),
-            });
-        } else if kd < 1.0 {
-            data.attributes.push(Attribute {
-                kind: AttributeKind::Negative,
-                text: "Low K/D Ratio".to_string(),
-            });
-        }
+    if kd >= 5.0 {
+        data.attributes.push(Attribute {
+            kind: AttributeKind::Excellent,
+            text: "High K/D Ratio".to_string(),
+        });
+    } else if kd >= 3.0 {
+        data.attributes.push(Attribute {
+            kind: AttributeKind::Positive,
+            text: "Good K/D Ratio".to_string(),
+        });
+    } else if kd < 1.0 {
+        data.attributes.push(Attribute {
+            kind: AttributeKind::Negative,
+            text: "Low K/D Ratio".to_string(),
+        });
+    }
 
-        data.num_friends = state
-            .players
-            .iter()
-            .filter(|(_, p)| p.name == "Retro" || p.name == "Cautami")
-            .count();
-
-        // println!("state {state:#?}");
-    });
+    data.complete = true;
 }

@@ -3,7 +3,6 @@ use std::collections::{BTreeMap, HashMap};
 use tf_demo_parser::{
     MessageType, ParserState, ReadResult, Stream,
     demo::{
-        data::game_state::Player,
         gamevent::GameEvent,
         message::{EntityId, GameEventMessage, Message, PacketEntity},
         packet::{
@@ -11,7 +10,7 @@ use tf_demo_parser::{
             stringtable::StringTableEntry,
         },
         parser::{MessageHandler, analyser::UserId},
-        sendprop::{SendProp, SendPropIdentifier},
+        sendprop::SendProp,
     },
 };
 
