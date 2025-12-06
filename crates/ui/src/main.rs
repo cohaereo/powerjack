@@ -1,241 +1,165 @@
 #![cfg_attr(not(debug_assertions), windows_subsystem = "windows")]
 
-use iced::Element;
-use iced::alignment::{Horizontal, Vertical};
-use iced::border::Radius;
-use iced::widget::{
-    Column, Container, Row, Scrollable, button, column, container, grid, row, stack, text,
-};
-use iced::{Background, Border, Color, Length, Padding, Shadow, Theme};
+use eframe::egui::{self, Color32, CornerRadius, RichText, Widget, vec2};
 use powerjack_demo::DemoHeader;
-use std::error::Error;
-use std::path::Path;
+use std::{collections::HashMap, path::Path};
 
-fn main() -> iced::Result {
-    dioxus_devtools::connect_subsecond();
-    iced::run(DemoList::update, DemoList::view)
-}
-
-#[derive(Debug, Clone, Copy)]
-pub enum Message {
-    Refresh,
+fn main() {
+    let native_options = eframe::NativeOptions {
+        window_builder: Some(Box::new(|viewport_builder| {
+            viewport_builder.with_inner_size([1600.0, 900.0])
+        })),
+        ..Default::default()
+    };
+    eframe::run_native(
+        "Powerjack",
+        native_options,
+        Box::new(|cc| Ok(Box::new(PowerjackApp::new(cc)))),
+    );
 }
 
 #[derive(Default)]
-pub struct DemoList {
+struct PowerjackApp {
     demos: Vec<DemoData>,
 }
 
-impl DemoList {
-    pub fn update(&mut self, message: Message) {
-        match message {
-            Message::Refresh => {
-                self.demos = find_demos();
-            }
-        }
+impl PowerjackApp {
+    pub fn new(cc: &eframe::CreationContext<'_>) -> Self {
+        let demos = find_demos();
+        egui_extras::install_image_loaders(&cc.egui_ctx);
+        Self { demos }
     }
+}
 
-    fn demo_tile<'a>(&'a self, demo: &'a DemoData) -> Element<'a, Message> {
-        let map_image_path = Path::new("images/maps")
-            .join(&demo.map_name)
-            .with_extension("jpg");
-        let map_image = if map_image_path.exists() {
-            iced::widget::image::Handle::from_path(map_image_path)
-        } else {
-            iced::widget::image::Handle::from_path("images/maps/unknown.jpg")
-        };
+impl eframe::App for PowerjackApp {
+    fn update(&mut self, ctx: &egui::Context, _frame: &mut eframe::Frame) {
+        egui::CentralPanel::default().show(ctx, |ui| {
+            ui.heading("Powerjack Demo Viewer");
 
-        let class_portrait_path =
-            format!("images/classes/{:?}.png", demo.primary_class).to_lowercase();
-        let class_portrait = iced::widget::image::Handle::from_path(class_portrait_path);
+            egui::ScrollArea::new([false, true]).show(ui, |ui| {
+                const COLUMN_WIDTH: f32 = 384.0;
+                let total_width = ui.available_width();
+                let num_columns = (total_width / COLUMN_WIDTH).floor() as usize;
+                let spacing_per_column = (total_width - (num_columns as f32 * COLUMN_WIDTH)) / (num_columns as f32);
 
-        let image_section = stack![
-            iced::widget::image(map_image.clone())
-                .width(450)
-                .height(256)
-                .content_fit(iced::ContentFit::Cover),
-            container(text(""))
-                .width(Length::Fill)
-                .height(Length::Fill)
-                .style(|_theme: &Theme| container::Style {
-                    background: Some(Background::Color(Color::from_rgba8(0, 0, 0, 0.53))),
-                    ..Default::default()
-                }),
-            container(
-                column![
-                    row![
-                        container(iced::widget::image(class_portrait).width(128).height(128))
-                            .padding(Padding {
-                                top: 18.0,
-                                right: 0.0,
-                                bottom: 0.0,
-                                left: 18.0,
-                            }),
-                        container(
-                            column![
-                                text(format!("🕒 {}", demo.time_played))
-                                    .size(24)
-                                    .color(Color::WHITE),
-                                if !demo.kd_ratio.is_empty() {
-                                    text(format!("🎯 {}", demo.kd_ratio))
-                                        .size(16)
-                                        .color(Color::WHITE)
-                                } else {
-                                    text("")
-                                },
-                                if demo.num_friends > 0 {
-                                    row![
-                                        text(format!(
-                                            "👥 {} friend{}",
-                                            demo.num_friends,
-                                            if demo.num_friends > 1 { "s" } else { "" }
-                                        ))
-                                        .size(16)
-                                        .color(Color::from_rgb8(0x66, 0xff, 0x66))
-                                    ]
-                                    .align_y(Vertical::Bottom)
-                                } else {
-                                    row![text("")].align_y(Vertical::Bottom)
-                                }
-                            ]
-                            .spacing(8)
-                        )
-                        .padding(Padding {
-                            top: 18.0,
-                            right: 16.0,
-                            bottom: 0.0,
-                            left: 0.0,
-                        })
-                        .width(Length::Fill)
-                        .align_x(iced::alignment::Horizontal::Right)
-                    ]
-                    .align_y(Vertical::Top),
-                    container(
-                        column(
-                            demo.attributes
-                                .iter()
-                                .map(|attr| {
-                                    let (icon, color) = match attr.kind {
-                                        AttributeKind::Excellent => {
-                                            ("⭐", Color::from_rgb8(0xff, 0xff, 0x66))
-                                        }
-                                        AttributeKind::Positive => {
-                                            ("⬆", Color::from_rgb8(0x66, 0xff, 0x66))
-                                        }
-                                        AttributeKind::Negative => {
-                                            ("⬇", Color::from_rgb8(0xff, 0x66, 0x66))
-                                        }
-                                    };
+                egui::Grid::new("le grid")
+                    .max_col_width(512.0)
+                    .spacing(egui::vec2(spacing_per_column, 32.0))
+                    .show(ui, |ui| {
 
-                                    row![
-                                        text(icon).size(16).color(color),
-                                        text(&attr.text).size(16).color(color)
-                                    ]
-                                    .spacing(4)
-                                    .align_y(Vertical::Center)
-                                    .into()
-                                })
-                                .collect::<Vec<_>>()
-                        )
-                        .spacing(8)
-                        .align_x(Horizontal::Right)
-                    )
-                    .width(Length::Fill)
-                    .align_x(iced::alignment::Horizontal::Right)
-                    .padding(Padding {
-                        top: 0.0,
-                        right: 16.0,
-                        bottom: 12.0,
-                        left: 0.0,
-                    })
-                ]
-                .spacing(0)
-                .height(Length::Fill)
-            )
-            .width(Length::Fill)
-            .height(Length::Fill)
-            .align_y(iced::alignment::Vertical::Bottom)
-        ]
-        .width(450)
-        .height(256);
+                        for (i, demo) in self.demos.iter().enumerate() {
+                            let map_image_path = format!("images/maps/{}.jpg", demo.map_name);
+                            let map_image = if std::fs::exists(&map_image_path).ok() == Some(true) {
+                                format!("file://{}", map_image_path)
+                            } else {
+                                "file://images/maps/unknown.jpg".to_string()
+                            };
+                            ui.allocate_ui(vec2(384.0, 214.0), |ui| {
+                                ui.vertical(|ui| {
+                                    let img_rect = egui::Image::new(map_image)
+                                        .corner_radius(CornerRadius::same(16))
+                                        .ui(ui)
+                                        .rect;
 
-        let label_section = container(row![
-            container(text(&demo.map_name).size(20).color(Color::WHITE))
-                .padding(Padding {
-                    top: 0.0,
-                    right: 0.0,
-                    bottom: 0.0,
-                    left: 16.0,
-                })
-                .width(Length::Fill),
-            container(
-                text(&demo.date)
-                    .size(16)
-                    .color(Color::from_rgb8(0xaa, 0xaa, 0xaa))
-            )
-            .padding(Padding {
-                top: 0.0,
-                right: 16.0,
-                bottom: 0.0,
-                left: 0.0,
-            })
-        ])
-        .width(450)
-        .height(48)
-        .style(|_theme: &Theme| container::Style {
-            background: Some(Background::Color(Color::from_rgb8(0x22, 0x22, 0x22))),
-            border: Border {
-                radius: Radius::default().bottom(16.0),
-                ..Default::default()
-            },
-            ..Default::default()
+                                    ui.painter().rect_filled(
+                                        img_rect,
+                                        CornerRadius::same(16),
+                                        egui::Color32::from_black_alpha(100),
+                                    );
+
+                                    ui.scope_builder(
+                                        egui::UiBuilder::default().max_rect(img_rect),
+                                        |ui| {
+                                            ui.add_space(8.0);
+
+                                            ui.horizontal_top(|ui| {
+                                                ui.add_space(12.0);
+                                                let class_name = format!("{:?}", demo.primary_class).to_lowercase();
+                                                let class_image_path = format!("file://images/classes/{}.png", class_name);
+                                                ui.image(class_image_path);
+                                            });
+                                        });
+
+
+                                    ui.scope_builder(
+                                        egui::UiBuilder::default().max_rect(img_rect.shrink(12.0)),
+                                        |ui| {
+                                            ui.add_space(8.0);
+
+                                            ui.horizontal_top(|ui| {
+                                                // Use vertical layout with spacing to push content
+                                                ui.with_layout(egui::Layout::right_to_left(egui::Align::Min), |ui| {
+                                                    ui.vertical(|ui| {
+                                                        // Top-right stats
+                                                        ui.with_layout(egui::Layout::right_to_left(egui::Align::Min), |ui| {
+                                                            ui.label(
+                                                                RichText::new(format!("🕑 {}", demo.time_played))
+                                                                    .color(Color32::WHITE)
+                                                                    .font(egui::FontId::proportional(24.0)),
+                                                            );
+                                                        });
+                                                        ui.with_layout(egui::Layout::right_to_left(egui::Align::Min), |ui| {
+                                                            ui.label(
+                                                                RichText::new(format!("🎯 {}", demo.kd_ratio))
+                                                                    .color(Color32::WHITE)
+                                                                    .font(egui::FontId::proportional(24.0)),
+                                                            );
+                                                        });
+                                                        if demo.num_friends > 0 {
+                                                            ui.with_layout(egui::Layout::right_to_left(egui::Align::Min), |ui| {
+                                                                ui.label(
+                                                                    RichText::new(format!("👥 {} friends", demo.num_friends))
+                                                                        .color(Color32::from_rgb(64, 255, 64))
+                                                                        .font(egui::FontId::proportional(24.0)),
+                                                                );
+                                                            });
+                                                        }
+
+                                                        // Add flexible space to push attributes to bottom
+                                                        ui.add_space(ui.available_height() - (demo.attributes.len() as f32 * 20.0));
+
+                                                        // Bottom-right attributes
+                                                        for attr in &demo.attributes {
+                                                            let (prefix, color) = match attr.kind {
+                                                                AttributeKind::Excellent => ("⭐", Color32::GOLD),
+                                                                AttributeKind::Positive => ("👍", Color32::LIGHT_GREEN),
+                                                                AttributeKind::Negative => ("👎", Color32::LIGHT_RED),
+                                                            };
+                                                            ui.with_layout(egui::Layout::right_to_left(egui::Align::Min), |ui| {
+                                                                ui.label(
+                                                                    RichText::new(format!("{} {}", prefix, attr.text))
+                                                                        .color(color)
+                                                                        .font(egui::FontId::proportional(16.0)).strong(),
+                                                                );
+                                                            });
+                                                        }
+                                                    });
+                                                });
+                                            });
+                                        },
+                                    );
+                                });
+                            });
+
+                            if (i + 1) % num_columns == 0 {
+                                ui.end_row();
+                            }
+                        }
+                    });
+            });
         });
-
-        container(
-            column![
-                container(image_section).style(|_theme: &Theme| container::Style {
-                    background: Some(Background::Color(Color::from_rgb8(0x22, 0x22, 0x22))),
-                    border: Border {
-                        radius: Radius::default().top(24.0),
-                        ..Default::default()
-                    },
-                    ..Default::default()
-                }),
-                label_section
-            ]
-            .spacing(0),
-        )
-        .into()
-    }
-
-    pub fn view(&'_ self) -> Column<'_, Message> {
-        subsecond::call(|| {
-            let mut col = Column::new()
-                .spacing(20)
-                .padding(20)
-                .push(button("Refresh").on_press(Message::Refresh));
-
-            let mut elements: Vec<Element<'_, Message>> = vec![];
-            for demo in self.demos.iter().take(16) {
-                elements.push(self.demo_tile(demo));
-            }
-
-            col = col.push(Scrollable::new(grid(elements).spacing(20)));
-
-            col
-        })
     }
 }
 
 #[derive(Clone)]
 struct DemoData {
-    attributes: Vec<Attribute>,
-    date: String,
-    kd_ratio: String,
-    map_name: String,
-    num_friends: usize,
-    primary_class: Class,
-    time_played: String,
+    pub attributes: Vec<Attribute>,
+    pub date: String,
+    pub kd_ratio: String,
+    pub map_name: String,
+    pub num_friends: usize,
+    pub primary_class: Class,
+    pub time_played: String,
 }
 
 #[derive(Debug, Clone, Copy)]
@@ -247,22 +171,25 @@ enum AttributeKind {
 
 #[derive(Clone)]
 struct Attribute {
-    kind: AttributeKind,
-    text: String,
+    pub kind: AttributeKind,
+    pub text: String,
 }
 
 #[derive(Debug, Clone, Copy)]
 enum Class {
-    Random,
     Scout,
     Soldier,
     Pyro,
+
     Demoman,
     Heavy,
     Engineer,
+
     Medic,
     Sniper,
     Spy,
+
+    Random,
 }
 
 fn find_demos() -> Vec<DemoData> {
@@ -285,15 +212,21 @@ fn find_demos() -> Vec<DemoData> {
             match DemoHeader::read(&mut file) {
                 Ok(header) => {
                     demos.push(DemoData {
-                        attributes: vec![Attribute {
-                            kind: AttributeKind::Positive,
-                            text: "High Score".to_string(),
-                        }],
+                        attributes: vec![
+                            Attribute {
+                                kind: AttributeKind::Excellent,
+                                text: "No Deaths".to_string(),
+                            },
+                            Attribute {
+                                kind: AttributeKind::Positive,
+                                text: "MVP #3".to_string(),
+                            },
+                        ],
                         date: "Today".to_string(),
                         kd_ratio: "2.5".to_string(),
                         map_name: header.map_name,
-                        num_friends: 0,
-                        primary_class: Class::Engineer,
+                        num_friends: 1,
+                        primary_class: Class::Random,
                         time_played: format_time(header.playback_time),
                     });
                 }
