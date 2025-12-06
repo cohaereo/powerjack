@@ -26,7 +26,7 @@ pub struct DemoHeader {
 }
 
 impl DemoHeader {
-    pub const MAGIC: &[u8; 8] = b"HL2DEMO\0";
+    pub const MAGIC: &'static [u8; 8] = b"HL2DEMO\0";
     pub const MAX_OSPATH: usize = 260;
 
     pub fn read<R: Read>(r: &mut R) -> anyhow::Result<Self> {
