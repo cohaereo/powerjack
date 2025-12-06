@@ -1,3 +1,6 @@
 /target
 /demos
 entities.vdf
+/.idea/copilot.*
+/.idea/discord.xml
+/.idea/modules.xml

@@ -4,12 +4,18 @@ version = "0.0.0"
 edition = "2024"
 
 [dependencies]
-slint = { version = "1.14.1", default-features = false, features = [
-    "compat-1-2",
-    "backend-default",
-    "renderer-femtovg-wgpu",
-] }
-i-slint-backend-winit = "1.14.1"
+powerjack-demo = { path = "../demo" }
 
-[build-dependencies]
-slint-build = "1.14.1"
+iced = { git = "https://github.com/iced-rs/iced", features = ["image"] }
+subsecond = "0.7.2"
+dioxus-devtools = "0.7.2"
+
+#slint = { version = "1.14.1", default-features = false, features = [
+#    "compat-1-2",
+#    "backend-default",
+#    "renderer-femtovg-wgpu",
+#] }
+#i-slint-backend-winit = "1.14.1"
+
+#[build-dependencies]
+#slint-build = "1.14.1"
