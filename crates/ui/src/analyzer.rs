@@ -167,6 +167,7 @@ impl DemoAnalyzer {
             player.entity = user_info.entity_id;
             player.name = user_info.player_info.name;
             player.user_id = user_info.player_info.user_id;
+            player.is_bot = user_info.player_info.is_fake_player != 0;
         }
 
         Ok(())
@@ -262,6 +263,7 @@ pub struct PlayerInfo {
     pub name: String,
     pub playtime_per_class: HashMap<Class, usize>,
     pub class: Class,
+    pub is_bot: bool,
 
     pub user_id: UserId,
 
@@ -291,6 +293,7 @@ impl Default for PlayerInfo {
             user_id: UserId::default(),
             name: "<unknown>".to_string(),
             playtime_per_class: HashMap::new(),
+            is_bot: true,
             class: Class::Other,
             kills: 0,
             deaths: 0,

@@ -28,6 +28,7 @@ pub struct DemoData {
 pub enum AttributeKind {
     Excellent,
     Positive,
+    Informative,
     Negative,
 }
 
@@ -219,6 +220,28 @@ pub fn populate_demo_data(data: &mut DemoData) {
         data.attributes.push(Attribute {
             kind: AttributeKind::Negative,
             text: "Low K/D Ratio".to_string(),
+        });
+    }
+
+    if data.header.playback_time < 60.0 * 2.0 {
+        // Attributes for very short games are irrelevant
+        data.attributes.clear();
+        data.attributes.push(Attribute {
+            kind: AttributeKind::Informative,
+            text: "Short Game".to_string(),
+        });
+    }
+
+    if state
+        .players
+        .iter()
+        .filter(|(_, p)| p.user_id != player.user_id)
+        .count()
+        == 0
+    {
+        data.attributes.push(Attribute {
+            kind: AttributeKind::Informative,
+            text: "Solo/Bot Match".to_string(),
         });
     }
 

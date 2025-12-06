@@ -218,9 +218,10 @@ impl eframe::App for PowerjackApp {
                                                             // Bottom-right attributes
                                                             for attr in &demo.attributes {
                                                                 let (prefix, color) = match attr.kind {
-                                                                    AttributeKind::Excellent => ("⭐", Color32::GOLD),
-                                                                    AttributeKind::Positive => ("👍", Color32::GREEN),
-                                                                    AttributeKind::Negative => ("👎", Color32::LIGHT_RED),
+                                                                    AttributeKind::Excellent => ('⭐', Color32::GOLD),
+                                                                    AttributeKind::Positive => ('👍', Color32::GREEN),
+                                                                    AttributeKind::Informative => ('\u{2139}', Color32::LIGHT_GRAY),
+                                                                    AttributeKind::Negative => ('👎', Color32::LIGHT_RED),
                                                                 };
                                                                 ui.with_layout(egui::Layout::right_to_left(egui::Align::Min), |ui| {
                                                                     ui.label(
