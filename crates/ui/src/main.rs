@@ -3,6 +3,8 @@
 mod analyzer;
 mod data;
 
+use std::{hash::Hash, ops::Range};
+
 use chrono::Datelike;
 use eframe::egui::{
     self, Color32, CornerRadius, Rect, RichText, Sense, Spinner, Vec2, Widget, pos2, vec2,
@@ -62,6 +64,195 @@ impl PowerjackApp {
             }
         }
     }
+
+    fn demo_grid_ui(&self, ui: &mut egui::Ui, demos: &[DemoData], id: impl Hash) {
+        const COLUMN_WIDTH: f32 = 384.0;
+        let total_width = ui.available_width();
+        let num_columns = (total_width / COLUMN_WIDTH).floor() as usize;
+        let spacing_per_column =
+            (total_width - (num_columns as f32 * COLUMN_WIDTH)) / (num_columns as f32);
+
+        egui::Grid::new(id)
+            .spacing(egui::vec2(spacing_per_column, 32.0))
+            .show(ui, |ui| {
+
+                for (i, demo) in demos.iter().enumerate() {
+                    let map_image_path = format!("images/maps/{}.webp", demo.map_name);
+                    let map_image = if std::fs::exists(&map_image_path).ok() == Some(true) {
+                        format!("file://{}", map_image_path)
+                    } else {
+                        "file://images/maps/unknown.webp".to_string()
+                    };
+                    ui.allocate_ui(vec2(384.0, 214.0), |ui| {
+                        ui.vertical(|ui| {
+                            ui.style_mut().spacing.item_spacing = Vec2::ZERO;
+                            let img_response = egui::Image::new(map_image)
+                                .corner_radius(
+                                    CornerRadius {
+                                        ne: 16,
+                                        nw: 16,
+                                        ..Default::default()
+                                    },)
+                                .ui(ui).interact(Sense::click());
+
+                            if img_response.clicked() {
+                                opener::open(&demo.path).ok();
+                            }
+
+
+                            let img_rect = img_response.rect;
+
+                            let subtitle_rect = Rect {
+                                min: pos2(img_rect.min.x, img_rect.max.y),
+                                max: img_rect.max + vec2(0.0, 48.0)
+                            };
+
+                            ui.painter().rect_filled(subtitle_rect,
+                                CornerRadius {
+                                    se: 16,
+                                    sw: 16,
+                                    ..Default::default()
+                                }, Color32::from_gray(48));
+
+                            ui.allocate_rect(subtitle_rect, egui::Sense::hover());
+                            ui.scope_builder(egui::UiBuilder::default().max_rect(subtitle_rect.shrink2(vec2(16.0, 14.0))), |ui| {
+                                ui.horizontal(|ui| {
+
+                                ui.strong(RichText::new(&demo.map_name).color(Color32::WHITE).size(18.0));
+
+                                    ui.vertical(|ui| {
+                                    ui.add_space(2.0);
+                                ui.with_layout(egui::Layout::right_to_left(egui::Align::Min), |ui| {
+
+                                    ui.label(
+                                        RichText::new(format_date_short(&demo.date))
+                                            .color(Color32::from_gray(162))
+                                            .italics()
+                                            .font(egui::FontId::proportional(14.0)),
+                                    );
+                                });
+                                    });
+                                });
+                            });
+
+                            ui.painter().rect_filled(
+                                img_rect,
+                                CornerRadius {
+                                    ne: 16,
+                                    nw: 16,
+                                    ..Default::default()
+                                },
+                                egui::Color32::from_black_alpha(100),
+                            );
+
+                            if demo.complete {
+                                ui.scope_builder(
+                                    egui::UiBuilder::default().max_rect(img_rect),
+                                    |ui| {
+                                        ui.add_space(8.0);
+
+                                        ui.horizontal_top(|ui| {
+                                            ui.add_space(12.0);
+                                            let class_name = format!("{:?}", demo.primary_class).to_lowercase();
+                                            let class_image_path = format!("file://images/classes/{}.png", class_name);
+                                            ui.image(class_image_path);
+                                        });
+                                    });
+
+
+                                let img_text_rect = img_rect.shrink2(vec2(16.0, 16.0)).with_min_y(img_rect.min.y + 8.0);
+                                ui.scope_builder(
+                                    egui::UiBuilder::default().max_rect(img_text_rect),
+                                    |ui| {
+                                        ui.add_space(8.0);
+
+                                        ui.horizontal_top(|ui| {
+                                            // Use vertical layout with spacing to push content
+                                            ui.with_layout(egui::Layout::right_to_left(egui::Align::Min), |ui| {
+                                                ui.vertical(|ui| {
+                                                    // Top-right stats
+                                                    ui.with_layout(egui::Layout::right_to_left(egui::Align::Min), |ui| {
+                                                        ui.label(
+                                                            RichText::new(format!("🕑 {}", demo.time_played))
+                                                                .color(Color32::WHITE)
+                                                                .font(egui::FontId::proportional(24.0)),
+                                                        );
+                                                    });
+                                                    if !demo.kd_ratio.is_empty() {
+                                                        ui.with_layout(egui::Layout::right_to_left(egui::Align::Min), |ui| {
+                                                            ui.label(
+                                                                RichText::new(format!("🎯 {}", demo.kd_ratio))
+                                                                    .color(Color32::WHITE)
+                                                                    .font(egui::FontId::proportional(24.0)),
+                                                            );
+                                                        });
+                                                    }
+                                                    if demo.num_friends > 0 {
+                                                        ui.with_layout(egui::Layout::right_to_left(egui::Align::Min), |ui| {
+                                                            ui.label(
+                                                                RichText::new(format!("👥 {}", demo.num_friends))
+                                                                    .color(Color32::from_rgb(64, 255, 64))
+                                                                    .font(egui::FontId::proportional(24.0)),
+                                                            );
+                                                        });
+                                                    }
+
+                                                    // Add flexible space to push attributes to bottom
+                                                    ui.add_space(ui.available_height() - (demo.attributes.len() as f32 * 20.0));
+
+                                                    // Bottom-right attributes
+                                                    for attr in &demo.attributes {
+                                                        let (prefix, color) = match attr.kind {
+                                                            AttributeKind::Excellent => ('⭐', Color32::GOLD),
+                                                            AttributeKind::Positive => ('👍', Color32::GREEN),
+                                                            AttributeKind::Informative => ('\u{2139}', Color32::LIGHT_GRAY),
+                                                            AttributeKind::Negative => ('👎', Color32::LIGHT_RED),
+                                                        };
+                                                        ui.with_layout(egui::Layout::right_to_left(egui::Align::Min), |ui| {
+                                                            ui.label(
+                                                                RichText::new(format!("{} {}", prefix, attr.text))
+                                                                    .color(color)
+                                                                    .font(egui::FontId::proportional(16.0)).strong(),
+                                                            );
+                                                        });
+                                                    }
+                                                });
+                                            });
+                                        });
+                                    },
+                                );
+                            }
+
+                            let card_rect = img_rect.union(subtitle_rect);
+                            if !demo.complete {
+                                ui.painter().rect_filled(
+                                    card_rect,
+                                    CornerRadius {
+                                        ne: 16,
+                                        nw: 16,
+                                        se: 16,
+                                        sw: 16,
+                                    },
+                                    egui::Color32::from_black_alpha(150),
+                                );
+
+
+                                ui.scope_builder(
+                                    egui::UiBuilder::default().max_rect(Rect::from_center_size(card_rect.center(), vec2(32.0, 64.0))),
+                                    |ui| {
+                                        Spinner::new().size(32.0).ui(ui)
+                                    },
+                                );
+                            }
+                        });
+                    });
+
+                    if (i + 1) % num_columns == 0 {
+                        ui.end_row();
+                    }
+                }
+            });
+    }
 }
 
 impl eframe::App for PowerjackApp {
@@ -72,202 +263,50 @@ impl eframe::App for PowerjackApp {
             s.interaction.selectable_labels = false;
         });
 
+        // Each entry represents a range of demos for a single day
+        let mut date_ranges: Vec<(chrono::NaiveDate, Range<usize>)> = Vec::new();
+        if !self.demos.is_empty() {
+            let mut start_idx = 0;
+            let mut current_date = self.demos[0].date.date_naive();
+            for (i, demo) in self.demos.iter().enumerate() {
+                let demo_date = demo.date.date_naive();
+                if demo_date != current_date {
+                    date_ranges.push((current_date, start_idx..i));
+                    current_date = demo_date;
+                    start_idx = i;
+                }
+            }
+            // Add the last range
+            date_ranges.push((current_date, start_idx..self.demos.len()));
+        }
+
         egui::CentralPanel::default().show(ctx, |ui| {
             ui.heading("Powerjack Demo Viewer");
-            if self.demo_meta_thread.as_ref().map(|t| !t.is_finished()).unwrap_or(false) {
+            if self
+                .demo_meta_thread
+                .as_ref()
+                .map(|t| !t.is_finished())
+                .unwrap_or(false)
+            {
                 ui.horizontal(|ui| {
-                   ui.spinner();
-                   ui.label(format!("Loading demo metadata... ({} left)", self.demos.iter().filter(|d| !d.complete).count()));
+                    ui.spinner();
+                    ui.label(format!(
+                        "Loading demo metadata... ({} left)",
+                        self.demos.iter().filter(|d| !d.complete).count()
+                    ));
                 });
             }
 
-            egui::ScrollArea::new([false, true]).auto_shrink([false, false]).show(ui, |ui| {
-                const COLUMN_WIDTH: f32 = 384.0;
-                let total_width = ui.available_width();
-                let num_columns = (total_width / COLUMN_WIDTH).floor() as usize;
-                let spacing_per_column = (total_width - (num_columns as f32 * COLUMN_WIDTH)) / (num_columns as f32);
-
-                egui::Grid::new("le grid")
-                    .spacing(egui::vec2(spacing_per_column, 32.0))
-                    .show(ui, |ui| {
-
-                        for (i, demo) in self.demos.iter().enumerate() {
-                            let map_image_path = format!("images/maps/{}.webp", demo.map_name);
-                            let map_image = if std::fs::exists(&map_image_path).ok() == Some(true) {
-                                format!("file://{}", map_image_path)
-                            } else {
-                                "file://images/maps/unknown.webp".to_string()
-                            };
-                            ui.allocate_ui(vec2(384.0, 214.0), |ui| {
-                                ui.vertical(|ui| {
-                                    ui.style_mut().spacing.item_spacing = Vec2::ZERO;
-                                    let img_response = egui::Image::new(map_image)
-                                        .corner_radius(
-                                            CornerRadius {
-                                                ne: 16,
-                                                nw: 16,
-                                                ..Default::default()
-                                            },)
-                                        .ui(ui).interact(Sense::click());
-
-                                    if img_response.clicked() {
-                                        opener::open(&demo.path).ok();
-                                    }
-
-
-                                    let img_rect = img_response.rect;
-
-                                    let subtitle_rect = Rect {
-                                        min: pos2(img_rect.min.x, img_rect.max.y),
-                                        max: img_rect.max + vec2(0.0, 48.0)
-                                    };
-
-                                    ui.painter().rect_filled(subtitle_rect,
-                                        CornerRadius {
-                                            se: 16,
-                                            sw: 16,
-                                            ..Default::default()
-                                        }, Color32::from_gray(48));
-
-                                    ui.allocate_rect(subtitle_rect, egui::Sense::hover());
-                                    ui.scope_builder(egui::UiBuilder::default().max_rect(subtitle_rect.shrink2(vec2(16.0, 14.0))), |ui| {
-                                        ui.horizontal(|ui| {
-
-                                        ui.strong(RichText::new(&demo.map_name).color(Color32::WHITE).size(18.0));
-
-                                            ui.vertical(|ui| {
-                                            ui.add_space(2.0);
-                                        ui.with_layout(egui::Layout::right_to_left(egui::Align::Min), |ui| {
-
-                                            ui.label(
-                                                RichText::new(format_date_short(&demo.date))
-                                                    .color(Color32::from_gray(162))
-                                                    .italics()
-                                                    .font(egui::FontId::proportional(14.0)),
-                                            );
-                                        });
-                                            });
-                                        });
-                                    });
-
-                                    ui.painter().rect_filled(
-                                        img_rect,
-                                        CornerRadius {
-                                            ne: 16,
-                                            nw: 16,
-                                            ..Default::default()
-                                        },
-                                        egui::Color32::from_black_alpha(100),
-                                    );
-
-                                    if demo.complete {
-                                        ui.scope_builder(
-                                            egui::UiBuilder::default().max_rect(img_rect),
-                                            |ui| {
-                                                ui.add_space(8.0);
-
-                                                ui.horizontal_top(|ui| {
-                                                    ui.add_space(12.0);
-                                                    let class_name = format!("{:?}", demo.primary_class).to_lowercase();
-                                                    let class_image_path = format!("file://images/classes/{}.png", class_name);
-                                                    ui.image(class_image_path);
-                                                });
-                                            });
-
-
-                                        let img_text_rect = img_rect.shrink2(vec2(16.0, 16.0)).with_min_y(img_rect.min.y + 8.0);
-                                        ui.scope_builder(
-                                            egui::UiBuilder::default().max_rect(img_text_rect),
-                                            |ui| {
-                                                ui.add_space(8.0);
-
-                                                ui.horizontal_top(|ui| {
-                                                    // Use vertical layout with spacing to push content
-                                                    ui.with_layout(egui::Layout::right_to_left(egui::Align::Min), |ui| {
-                                                        ui.vertical(|ui| {
-                                                            // Top-right stats
-                                                            ui.with_layout(egui::Layout::right_to_left(egui::Align::Min), |ui| {
-                                                                ui.label(
-                                                                    RichText::new(format!("🕑 {}", demo.time_played))
-                                                                        .color(Color32::WHITE)
-                                                                        .font(egui::FontId::proportional(24.0)),
-                                                                );
-                                                            });
-                                                            if !demo.kd_ratio.is_empty() {
-                                                                ui.with_layout(egui::Layout::right_to_left(egui::Align::Min), |ui| {
-                                                                    ui.label(
-                                                                        RichText::new(format!("🎯 {}", demo.kd_ratio))
-                                                                            .color(Color32::WHITE)
-                                                                            .font(egui::FontId::proportional(24.0)),
-                                                                    );
-                                                                });
-                                                            }
-                                                            if demo.num_friends > 0 {
-                                                                ui.with_layout(egui::Layout::right_to_left(egui::Align::Min), |ui| {
-                                                                    ui.label(
-                                                                        RichText::new(format!("👥 {}", demo.num_friends))
-                                                                            .color(Color32::from_rgb(64, 255, 64))
-                                                                            .font(egui::FontId::proportional(24.0)),
-                                                                    );
-                                                                });
-                                                            }
-
-                                                            // Add flexible space to push attributes to bottom
-                                                            ui.add_space(ui.available_height() - (demo.attributes.len() as f32 * 20.0));
-
-                                                            // Bottom-right attributes
-                                                            for attr in &demo.attributes {
-                                                                let (prefix, color) = match attr.kind {
-                                                                    AttributeKind::Excellent => ('⭐', Color32::GOLD),
-                                                                    AttributeKind::Positive => ('👍', Color32::GREEN),
-                                                                    AttributeKind::Informative => ('\u{2139}', Color32::LIGHT_GRAY),
-                                                                    AttributeKind::Negative => ('👎', Color32::LIGHT_RED),
-                                                                };
-                                                                ui.with_layout(egui::Layout::right_to_left(egui::Align::Min), |ui| {
-                                                                    ui.label(
-                                                                        RichText::new(format!("{} {}", prefix, attr.text))
-                                                                            .color(color)
-                                                                            .font(egui::FontId::proportional(16.0)).strong(),
-                                                                    );
-                                                                });
-                                                            }
-                                                        });
-                                                    });
-                                                });
-                                            },
-                                        );
-                                    }
-
-                                    let card_rect = img_rect.union(subtitle_rect);
-                                    if !demo.complete {
-                                        ui.painter().rect_filled(
-                                            card_rect,
-                                            CornerRadius {
-                                                ne: 16,
-                                                nw: 16,
-                                                se: 16,
-                                                sw: 16,
-                                            },
-                                            egui::Color32::from_black_alpha(150),
-                                        );
-
-
-                                        ui.scope_builder(
-                                            egui::UiBuilder::default().max_rect(Rect::from_center_size(card_rect.center(), vec2(32.0, 64.0))),
-                                            |ui| {
-                                                Spinner::new().size(32.0).ui(ui)
-                                            },
-                                        );
-                                    }
-                                });
-                            });
-
-                            if (i + 1) % num_columns == 0 {
-                                ui.end_row();
-                            }
-                        }
-                    });
-            });
+            egui::ScrollArea::new([false, true])
+                .auto_shrink([false, false])
+                .show(ui, |ui| {
+                    for (date, range) in &date_ranges {
+                        ui.add_space(16.0);
+                        ui.heading(date.format("%B %d, %Y").to_string());
+                        ui.separator();
+                        self.demo_grid_ui(ui, &self.demos[range.clone()], date);
+                    }
+                });
         });
     }
 }

@@ -239,6 +239,7 @@ pub fn populate_demo_data(data: &mut DemoData) {
         .count()
         == 0
     {
+        data.attributes.clear();
         data.attributes.push(Attribute {
             kind: AttributeKind::Informative,
             text: "Solo/Bot Match".to_string(),
